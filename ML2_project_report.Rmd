@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Machine learning 2"
 author: "Mara Acuja"
 date: "24 11 2021"
 output:
@@ -12,7 +12,42 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-## R Markdown
+# Comparison of machine learning algorithms / Introduction / Theory
+
+This report attempts to compare two regression/classification algorithms on its behaviour on a specific data set. What should be found out?
+
+
+# Data set
+Here should be a bit of a short summary of the data set with some key characteristics of the data set.
+
+What is it about? Which variables are included? What type of variables?
+What is missing? What about missing values?
+
+# Method
+Short summary about the algorithms. Which are used? What do we do? Classification or Regression?
+
+## Algorithm 1
+Short introduction of the first algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
+
+
+## Algorithm 2
+Short introduction of the second algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
+
+
+# Results
+Here some tables, summaries or especially graphs shoul be shown here. Maybe this section should be separated into two to show the algorithms for themselves
+
+
+# Discussion
+Here follows the discussion of the results. What are the major findings? How did the algorithms perform? Which one was better overall? Is it always better or were the findings which were better by the other one?
+Which one should be implemented? How could the algorithm be tweeked to perform even better?
+Where were the problems during implementation? Where are the limits for the algorithms?
+
+
+# Conclusion
+At final some conclusions about the key findings and which algorithm should be used. What was the goal? Were and how were they achieved?
+
+# RMarkdown default stuff - needs to be removed but serves up to now as draft
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
