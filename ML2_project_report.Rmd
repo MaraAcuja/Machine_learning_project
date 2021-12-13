@@ -12,6 +12,25 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
+```{r import_files, include=TRUE}
+data <- read.csv("Data/default_features_1059_tracks.txt", header=FALSE)
+data <- as.data.frame(data)
+colnames(data)[69:70] <- c("Longitude", "Latitude")
+```
+
+```{r preprocessing, include=TRUE}
+# Maybe some more preprocessing could be done here.
+anyNA(data) # testing if there is at least a single NA -> but in this dataset there isn't
+anyDuplicated(data) # testing for duplicates -> 0 found
+```
+
+```{r split_into_test_and_train, include=TRUE}
+set.seed(1)
+n <-dim(data)[1]
+train <- sample(1:n, 0.8*n)
+test <- (1:n)[-train]
+```
+
 # Comparison of machine learning algorithms / Introduction / Theory
 
 This report attempts to compare two regression/classification algorithms on its behaviour on a specific data set. What should be found out?
