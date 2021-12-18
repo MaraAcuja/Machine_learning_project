@@ -13,9 +13,23 @@ knitr::opts_chunk$set(echo = TRUE)
 library(glmnet)
 ```
 
+# librarys
+
+```{r import_files, include=TRUE}
+install.packages("ggmap")
+install.packages("maptools")
+install.packages("maps")
+
+library("ggplot2")
+library("ggmap")
+library("maptools")
+library("maps")
+```
+
 # Comparison of machine learning algorithms / Introduction / Theory
 
 This report attempts to compare two regression/classification algorithms on its behaviour on a specific data set. What should be found out?
+This report attempts to compare two regression/classification algorithms on its behavior on a specific data set. What should be found out?
 
 
 # Data set
@@ -36,13 +50,26 @@ distances <- function(predicted, actual_value) {
 ```{r import_files, include=TRUE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
 data <- as.data.frame(data)
+<<<<<<< HEAD
 colnames(data)[117:118] <- c("Latitude", "Longitude")
+=======
+colnames(data)[117:118] <- c("Longitude", "Latitude")
+>>>>>>> d572d5dfaf7b5e71e09ac587f1841b969507df4f
 ```
 
 ```{r preprocessing, include=TRUE}
 # Maybe some more preprocessing could be done here.
 anyNA(data) # testing if there is at least a single NA -> but in this dataset there isn't
+# Maybe some more pre-processing could be done here.
+anyNA(data) # testing if there is at least a single NA -> but in this data set there isn't
 anyDuplicated(data) # testing for duplicates -> 0 found
+```
+
+```{r insights, include=TRUE}
+# basic world map with music origins
+mapWorld <- borders("world", colour="gray50", fill="white")
+mp <- ggplot() + mapWorld
+mp + geom_point(data = data, aes(x = Latitude, y = Longitude), color = "red", alpha = 0.5)
 ```
 
 ```{r split_into_test_and_train, include=TRUE}
