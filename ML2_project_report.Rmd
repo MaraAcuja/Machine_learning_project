@@ -25,7 +25,7 @@ What is missing? What about missing values?
 
 
 ```{r import_files, include=TRUE}
-data <- read.csv("Data/default_features_1059_tracks.txt", header=FALSE)
+data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
 data <- as.data.frame(data)
 colnames(data)[69:70] <- c("Longitude", "Latitude")
 ```
