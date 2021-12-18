@@ -9,17 +9,17 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#install.packages("glmnet")
-library(glmnet)
 ```
 
 # librarys
 
-```{r import_files, include=TRUE}
-install.packages("ggmap")
-install.packages("maptools")
-install.packages("maps")
+```{r import_libs, include=TRUE}
+#install.packages("ggmap")
+#install.packages("maptools")
+#install.packages("maps")
+#install.packages("glmnet")
 
+library(glmnet)
 library("ggplot2")
 library("ggmap")
 library("maptools")
@@ -50,11 +50,7 @@ distances <- function(predicted, actual_value) {
 ```{r import_files, include=TRUE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
 data <- as.data.frame(data)
-<<<<<<< HEAD
 colnames(data)[117:118] <- c("Latitude", "Longitude")
-=======
-colnames(data)[117:118] <- c("Longitude", "Latitude")
->>>>>>> d572d5dfaf7b5e71e09ac587f1841b969507df4f
 ```
 
 ```{r preprocessing, include=TRUE}
@@ -113,7 +109,7 @@ Short introduction of the second algorithm. What does it do? What are the streng
 grid <- 10^seq(10, -2, length=100)
 
 # define the design matrix and the model
-x <- model.matrix(cbind("Latitude", "Longitude")~., data[train,])[,-c("Longitude", "Latitude")]
+#x <- model.matrix(cbind("Latitude", "Longitude")~., data[train,])[,-c("Longitude", "Latitude")]
 #y <- cbind("Latitude", "Longitude")
 #ridge.mod <- glmnet(x,y, alpha =0, lambda=grid)
 #dim(coef(ridge.mod))
