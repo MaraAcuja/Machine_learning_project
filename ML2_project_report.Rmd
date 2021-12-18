@@ -9,7 +9,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
+#install.packages("glmnet")
+library(glmnet)
 ```
 
 # Comparison of machine learning algorithms / Introduction / Theory
@@ -23,11 +24,19 @@ Here should be a bit of a short summary of the data set with some key characteri
 What is it about? Which variables are included? What type of variables?
 What is missing? What about missing values?
 
+```{r functions, include=TRUE}
+distances <- function(predicted, actual_value) {
+  dif <- predicted-actual_value
+  dif <- dif * (40030/360) # scaling coordinates to km by the factor circumference (km) / 360°
+  mse <- sqrt(dif[,1]^2 + dif[,2]^2)
+  return(mse)
+}
+```
 
 ```{r import_files, include=TRUE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
 data <- as.data.frame(data)
-colnames(data)[69:70] <- c("Longitude", "Latitude")
+colnames(data)[117:118] <- c("Latitude", "Longitude")
 ```
 
 ```{r preprocessing, include=TRUE}
@@ -44,16 +53,87 @@ test <- (1:n)[-train]
 ```
 
 
+
 # Method
 Short summary about the algorithms. Which are used? What do we do? Classification or Regression?
 
-## Algorithm 1
+## Algorithm 1 - Linear Regression
+
 Short introduction of the first algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
+
+```{r linear_regression, include=TRUE}
+model.lm.all <- lm(cbind(Longitude, Latitude)~., data=data[train,])
+#summary(model.lm.all)
+
+# for a significance level of <0.05: just the variables fitting this constraint are taken.
+model.lm.sig <- lm(cbind(Longitude, Latitude)~ V4+V9+V16+V30+V32+V33+V37+V38+V61+V90+V91+V92+V95+V96+V104+V5+V6+V8+V9+V11+V15+V34+V39+V63+V94+V97, data=data[train,])
+
+anova(model.lm.all, model.lm.sig)
+
+pred <- predict(model.lm.sig, newdata=data[test,])
+mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+# TODO:  in GGPLOT2
+boxplot(distances(pred, data[test, c("Latitude","Longitude")])) 
+```
 
 
 
 ## Algorithm 2
 Short introduction of the second algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
+
+```{r playground_matthias}
+# defining the grid for lambda
+grid <- 10^seq(10, -2, length=100)
+
+# define the design matrix and the model
+x <- model.matrix(cbind("Latitude", "Longitude")~., data[train,])[,-c("Longitude", "Latitude")]
+#y <- cbind("Latitude", "Longitude")
+#ridge.mod <- glmnet(x,y, alpha =0, lambda=grid)
+#dim(coef(ridge.mod))
+
+# show the influence of lambda on some variables
+#plot(grid, coef(ridge.mod)["horsepower",], log="x", typl="1",xlab="lambda")
+#plot(grid, coef(ridge.mod)["weight",], log="x", typl="1",xlab="lambda")
+#plot(grid, coef(ridge.mod)["acceleration",], log="x", typl="1",xlab="lambda")
+#plot(ridge.mod, xvar="lambda")
+
+# splitting the data into test and training data
+#set.seed(12)
+#train <- sample(1:nrow(x), nrow(x)/2)
+#test <- (-train)
+#y.test <- y[test]
+
+# do cross-validation to find the right lambda
+#cv.out <- cv.glmnet(x, y, lambda=grid, alpha=0)
+#plot(cv.out)
+#cv.out$lambda.min
+
+# apply ridge regression with the right parameters
+#ridge.pred <- predict(ridge.mod, s=cv.out$lambda.min, newx=data[test,-c("Latitude", "Longitude")])
+#distances(ridge.pred, data[test, c("Latitude","Longitude")])
+# refine the grid between 0 and 1
+#grid2 <- seq(0.001,1.0,length=100)
+#cv.out <- cv.glmnet(x[train,], y[train], lambda=grid2, alpha=0)
+#plot(cv.out)
+
+#ridge.pred <- predict(ridge.mod, s=cv.out$lambda.min, newx=x[test,])
+#MSE.out <-  mean((ridge.pred-y.test)^2)
+
+#ridge.pred <- predict(ridge.mod, s=0.67, newx=x[test,])
+#MSE.out <-  mean((ridge.pred-y.test)^2)
+
+#grid3 <- seq(1e-8, 1e-2, length=10000)
+#cv.out <- cv.glmnet(x[train,], y[train], lambda=grid3, alpha=0)
+#plot(cv.out)
+
+#ridge.pred <- predict(ridge.mod, s=cv.out$lambda.min, newx=x[test,])
+#MSE.out <-  mean((ridge.pred-y.test)^2)
+
+# apply ridge regression with finally the best lambda
+#out <- glmnet(x,y, alpha=0)
+#ridge.coeff <- predict(out, type="coefficients", s=cv.out$lambda.min)
+
+```
 
 
 # Results
