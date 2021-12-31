@@ -18,12 +18,20 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("maptools")
 #install.packages("maps")
 #install.packages("glmnet")
+#install.packages("ISLR")
+#TODO the one below necessary?
+#install.packages("rgl")
 
 library(glmnet)
 library("ggplot2")
 library("ggmap")
 library("maptools")
 library("maps")
+
+library(ISLR)
+options(rgl.printRglwidget = TRUE)
+library(rgl)
+
 ```
 
 # Comparison of machine learning algorithms / Introduction / Theory
@@ -65,7 +73,8 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
-mp + geom_point(data = data, aes(x = Latitude, y = Longitude), color = "red", alpha = 0.5)
+# TODO: @Stefan: I changed the line below from (x=Latitude, y=Longitude) to that one. The points didnt match with the world. Now they do.
+mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
 ```
 
 ```{r split_into_test_and_train, include=TRUE}
@@ -99,64 +108,61 @@ mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in 
 boxplot(distances(pred, data[test, c("Latitude","Longitude")])) 
 ```
 
+```{r Matthias_playground_ridge, include=TRUE}
+grid <- 10^seq(10, -2, length=100)
+x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
+y <- data[, c("Latitude","Longitude")]
+#set.seed(100)
+
+
+## This is code for the evalutation how lambda for the models differ depending on the output variable (Latitude vs. Longitude)
+
+#outputs <- matrix(nrow=100, ncol=2)
+#for (r in 1:100) {
+#  out1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
+#  #plot(out1)
+#  bestlam <- out1$lambda.min
+#  outputs[r,1] <- bestlam
+#  out2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
+#  #plot(out2)
+#  bestlam <- out2$lambda.min
+#  outputs[r,2] <- bestlam
+#}
+
+#xx <- outputs[,1]
+#yy <- outputs[,2]
+#t.test(xx,yy)
+#boxplot(outputs)
+
+# Ridge regression with cross-validation depending on tw separate models
+ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
+plot(ridge.mod.1)
+bestlam1 <- ridge.mod.1$lambda.min
+
+ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
+plot(ridge.mod.2)
+bestlam2 <- ridge.mod.2$lambda.min
+
+# predictions for two separate models
+pred1 <- predict(ridge.mod.1, s=bestlam1, newx=x[test,])
+pred2 <- predict(ridge.mod.2, s=bestlam2, newx=x[test,])
+
+pred <- cbind(pred1, pred2)
+mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+
+# predictions for a model using just one lambda (mean)
+pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
+pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
+
+
+pred <- cbind(pred1, pred2)
+mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+
+```
 
 
 ## Algorithm 2
 Short introduction of the second algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
-
-```{r playground_matthias}
-# defining the grid for lambda
-grid <- 10^seq(10, -2, length=100)
-
-# define the design matrix and the model
-#x <- model.matrix(cbind("Latitude", "Longitude")~., data[train,])[,-c("Longitude", "Latitude")]
-#y <- cbind("Latitude", "Longitude")
-#ridge.mod <- glmnet(x,y, alpha =0, lambda=grid)
-#dim(coef(ridge.mod))
-
-# show the influence of lambda on some variables
-#plot(grid, coef(ridge.mod)["horsepower",], log="x", typl="1",xlab="lambda")
-#plot(grid, coef(ridge.mod)["weight",], log="x", typl="1",xlab="lambda")
-#plot(grid, coef(ridge.mod)["acceleration",], log="x", typl="1",xlab="lambda")
-#plot(ridge.mod, xvar="lambda")
-
-# splitting the data into test and training data
-#set.seed(12)
-#train <- sample(1:nrow(x), nrow(x)/2)
-#test <- (-train)
-#y.test <- y[test]
-
-# do cross-validation to find the right lambda
-#cv.out <- cv.glmnet(x, y, lambda=grid, alpha=0)
-#plot(cv.out)
-#cv.out$lambda.min
-
-# apply ridge regression with the right parameters
-#ridge.pred <- predict(ridge.mod, s=cv.out$lambda.min, newx=data[test,-c("Latitude", "Longitude")])
-#distances(ridge.pred, data[test, c("Latitude","Longitude")])
-# refine the grid between 0 and 1
-#grid2 <- seq(0.001,1.0,length=100)
-#cv.out <- cv.glmnet(x[train,], y[train], lambda=grid2, alpha=0)
-#plot(cv.out)
-
-#ridge.pred <- predict(ridge.mod, s=cv.out$lambda.min, newx=x[test,])
-#MSE.out <-  mean((ridge.pred-y.test)^2)
-
-#ridge.pred <- predict(ridge.mod, s=0.67, newx=x[test,])
-#MSE.out <-  mean((ridge.pred-y.test)^2)
-
-#grid3 <- seq(1e-8, 1e-2, length=10000)
-#cv.out <- cv.glmnet(x[train,], y[train], lambda=grid3, alpha=0)
-#plot(cv.out)
-
-#ridge.pred <- predict(ridge.mod, s=cv.out$lambda.min, newx=x[test,])
-#MSE.out <-  mean((ridge.pred-y.test)^2)
-
-# apply ridge regression with finally the best lambda
-#out <- glmnet(x,y, alpha=0)
-#ridge.coeff <- predict(out, type="coefficients", s=cv.out$lambda.min)
-
-```
 
 
 # Results
