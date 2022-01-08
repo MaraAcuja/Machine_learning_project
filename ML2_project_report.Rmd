@@ -9,6 +9,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+<<<<<<< HEAD
 ```
 
 # notes
@@ -20,19 +21,31 @@ print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt
 ```
 
 # librarys
-```{r import_files, include=TRUE}
-install.packages("ggmap")
-install.packages("maptools")
-install.packages("maps")
 
+```{r import_libs, include=TRUE}
+#install.packages("ggmap")
+#install.packages("maptools")
+#install.packages("maps")
+#install.packages("glmnet")
+#install.packages("ISLR")
+#TODO the one below necessary?
+#install.packages("rgl")
+
+library(glmnet)
 library("ggplot2")
 library("ggmap")
 library("maptools")
 library("maps")
+
+library(ISLR)
+options(rgl.printRglwidget = TRUE)
+library(rgl)
+
 ```
 
 # Comparison of machine learning algorithms / Introduction / Theory
 
+This report attempts to compare two regression/classification algorithms on its behaviour on a specific data set. What should be found out?
 This report attempts to compare two regression/classification algorithms on its behavior on a specific data set. What should be found out?
 
 
@@ -42,6 +55,14 @@ Here should be a bit of a short summary of the data set with some key characteri
 What is it about? Which variables are included? What type of variables?
 What is missing? What about missing values?
 
+```{r functions, include=TRUE}
+distances <- function(predicted, actual_value) {
+  dif <- predicted-actual_value
+  dif <- dif * (40030/360) # scaling coordinates to km by the factor circumference (km) / 360°
+  mse <- sqrt(dif[,1]^2 + dif[,2]^2)
+  return(mse)
+}
+```
 
 ```{r import_files, include=TRUE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
@@ -50,6 +71,8 @@ colnames(data)[117:118] <- c("Latitude", "Longitude")
 ```
 
 ```{r preprocessing, include=TRUE}
+# Maybe some more preprocessing could be done here.
+anyNA(data) # testing if there is at least a single NA -> but in this dataset there isn't
 # Maybe some more pre-processing could be done here.
 anyNA(data) # testing if there is at least a single NA -> but in this data set there isn't
 anyDuplicated(data) # testing for duplicates -> 0 found
@@ -72,6 +95,7 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
+<<<<<<< HEAD
 mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
 ```
 ```{r insights, include=TRUE}
@@ -94,12 +118,162 @@ test <- (1:n)[-train]
 ```
 
 
+
 # Method
 Short summary about the algorithms. Which are used? What do we do? Classification or Regression?
 
-## Algorithm 1
+## Baseline - Linear Regression
+
+First, we take a baseline to get a basic understanding on how well our chosen algorithms perform. Therefore, we decided to use a linear regression. First we created a model which includes all variables. The lm() command cannot compute a model for both output variables at the same time. So it creates two separate linear models, one for each output variable:
+
+```{r linear_regression_all_variables, include=TRUE}
+model.lm.all <- lm(cbind(Longitude, Latitude)~., data=data[train,])
+pred.all <- predict(model.lm.all, newdata=data[test,])
+```
+
+To calculate a good meaningful measurement for the goodness of fit for the predictions the distance from the true location is calculated. The distances are calculated as the euclidean distances of the Longitude and Latitude between the predictions and the true location. They are measured in [km]. These will be used for all the comparisons of the algorithms between each other but also with the baseline and also with the literature (we need here another citation to the original paper)
+
+The predictions are on average quite far from the true destination:
+```{r linear_regression_all_variables_result, include=TRUE, echo=FALSE}
+mean(distances(pred.all, data[test, c("Latitude","Longitude")])) ## final result in km
+```
+
+The impact of the variables was analysed. It seemed that not all of them have a significant influence on the models. So a second model was developed, just using the variable which have a significiant influence on the full model, either on the Latitude or on the Longitude. 
+
+
+```{r linear_regression_significant_variables, include=TRUE}
+model.lm.sig <- lm(cbind(Longitude, Latitude)~ V4+V9+V16+V30+V32+V33+V37+V38+V61+V90+V91+V92+V95+V96
+                   +V104+V5+V6+V8+V9+V11+V15+V34+V39+V63+V94+V97, 
+                   data=data[train,])
+pred.sig <- predict(model.lm.sig, newdata=data[test,])
+```
+
+The predictions for the smaller models are on average a bit better:
+```{r linear_regression_significant_variables_result, include=TRUE, echo=FALSE}
+mean(distances(pred.sig, data[test, c("Latitude","Longitude")])) ## final result in km
+```
+
+An ANOVA was calculated to check if there is a significant difference between the two models. 
+```{r linear_regression_anova, include=TRUE}
+anova(model.lm.all, model.lm.sig)
+```
+
+The model tells that there is a difference and, as seen before, the smaller model performs better.
+
+
+```{r linear_regression_boxplot, echo=FALSE}
+# TODO:  in GGPLOT2
+boxplot(c(distances(pred.sig, data[test, c("Latitude","Longitude")]), distances(pred.all, data[test, c("Latitude","Longitude")]))) 
+```
+
+## Algorithm 1 - Ridge Regression
+
 Short introduction of the first algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
 
+The first algorithm we tried was ridge regression. This algorithm is similar to a linear regression but while the linear regression tries to minimize the difference between the weighted input variables and the output data, the ridge regression adds a regularisation term on the input variables. 
+
+[Here has to be added the formula of the ridge regression]
+
+In fact, this is a possibility to fight over-fitting. If lambda is big the model tends to just take the b0 into account. So the predicted value is the mean of the output variable. If lambda is small, then the model tends to be normal non-regularised model, hence the one from the linear regression. 
+
+The command glmnet is used to perform the ridge regression. Cross-validation is performed to find the optimal lambda values. In general, it would be possible with glmnet to just calculate one single model for both output variables. But unfortunately, this option is not available when doing the cross-validation. So, again two independent cross-validations are done to get two values for lambda, one for each output variable.
+
+```{r ridge_data_preparation, include=TRUE, echo=FALSE}
+x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
+y <- data[, c("Latitude","Longitude")]
+```
+
+```{r ridge_data_cv, include=TRUE, echo=FALSE}
+ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
+plot(ridge.mod.1) # TODO: Here has to be GGPLOT used
+bestlam1 <- ridge.mod.1$lambda.min
+
+ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
+plot(ridge.mod.2) # TODO: Here has to be GGPLOT used
+bestlam2 <- ridge.mod.2$lambda.min
+```
+It can be seen that the distributions for lambda are quite similar for both models. Although the MSE for both models differ the optimal lambda is quite similar:
+
+```{r ridge_best_lambda, include=TRUE, echo=FALSE}
+bestlam1
+bestlam2
+```
+
+The model performs better with ridge regression as with the baseline. In this model two lambdas are used.
+
+```{r ridge_data_two_lambdas, include=TRUE, echo=FALSE}
+pred1 <- predict(ridge.mod.1, s=bestlam1, newx=x[test,])
+pred2 <- predict(ridge.mod.2, s=bestlam2, newx=x[test,])
+
+pred <- cbind(pred1, pred2)
+mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+```
+
+A second result is calculated with just one lambda. This lambda is calculated as the mean of the before calculated values of lambda. The result for the adapted version is just slightly worse than with the model with two independent lambdas:
+
+```{r ridge_data_mean_lambda, include=TRUE, echo=FALSE}
+pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
+pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
+
+
+pred <- cbind(pred1, pred2)
+mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+```
+
+
+
+
+```{r Matthias_playground_ridge, include=FALSE}
+grid <- 10^seq(10, -2, length=100)
+x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
+y <- data[, c("Latitude","Longitude")]
+#set.seed(100)
+
+
+## This is code for the evalutation how lambda for the models differ depending on the output variable (Latitude vs. Longitude)
+
+#outputs <- matrix(nrow=100, ncol=2)
+#for (r in 1:100) {
+#  out1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
+#  #plot(out1)
+#  bestlam <- out1$lambda.min
+#  outputs[r,1] <- bestlam
+#  out2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
+#  #plot(out2)
+#  bestlam <- out2$lambda.min
+#  outputs[r,2] <- bestlam
+#}
+
+#xx <- outputs[,1]
+#yy <- outputs[,2]
+#t.test(xx,yy)
+#boxplot(outputs)
+
+# Ridge regression with cross-validation depending on tw separate models
+ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
+plot(ridge.mod.1)
+bestlam1 <- ridge.mod.1$lambda.min
+
+ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
+plot(ridge.mod.2)
+bestlam2 <- ridge.mod.2$lambda.min
+
+# predictions for two separate models
+pred1 <- predict(ridge.mod.1, s=bestlam1, newx=x[test,])
+pred2 <- predict(ridge.mod.2, s=bestlam2, newx=x[test,])
+
+pred <- cbind(pred1, pred2)
+mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+
+# predictions for a model using just one lambda (mean)
+pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
+pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
+
+
+pred <- cbind(pred1, pred2)
+mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+
+```
 
 
 ## Algorithm 2
