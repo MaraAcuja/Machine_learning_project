@@ -22,6 +22,7 @@ print("for pre-processing mabe a small whiskers plot, that proves that the data 
 
 # librarys
 
+<<<<<<< HEAD
 ```{r import_libs, include=TRUE}
 #install.packages("installr")
 #library("installr")
@@ -50,7 +51,6 @@ library(rgl)
 # Comparison of machine learning algorithms / Introduction / Theory
 
 This report attempts to compare two regression/classification algorithms on its behaviour on a specific data set. What should be found out?
-This report attempts to compare two regression/classification algorithms on its behavior on a specific data set. What should be found out?
 
 
 # Data set
