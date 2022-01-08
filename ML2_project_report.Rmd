@@ -396,29 +396,37 @@ history <- model %>% fit(
 # Plot the history
 plot(history)
 
-# Plot the accuracy of the training data 
+# Plot the MSE of the training data 
 plot(history$metrics$mean_squared_error, main="Model's Mean Squared Error", xlab = "epoch", ylab="mae", col="blue", type="l")
 
-# Plot the accuracy of the validation data
+# Plot the MSE of the validation data
 lines(history$metrics$val_mean_squared_error, col="green")
 
 # Add Legend
-legend("bottomright", c("train","val_train"), col=c("blue", "green"), lty=c(1,1))
+legend("topright", c("train","val_train"), col=c("blue", "green"), lty=c(1,1))
 
+# MSE of train data
+y_preds_train<-model %>% predict(X_train)
+mean((y_train - y_preds_train)^2)
 
-### Test data ###
-
-# Predict the Latitude for the test data
-y_pred <- model %>% predict(X_test, batch_size = 128)
+# Customized distance metric
+mean(distances(y_train, y_preds_train)) 
 
 ```
 
-For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and also use the custom distances metric. We get the following result:
+For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and use the MSE as well as the custom distance metric. We get the following results:
 
 ```{r Vy_playground_NN_distance_metric, include=TRUE, echo=FALSE}
-# Evaluate on test data and labels with customized distance me
-mean(distances(y_test, y_pred))                   # 4122.794
+### Test data ###
 
+# Predict the Latitude for the test data
+y_pred <- model %>% predict(X_test)
+
+# Evaluate with MSE
+mean((y_test - y_pred)^2)
+
+# Evaluate on test data and labels with customized distance metric
+mean(distances(y_test, y_pred))                   # 4122.794
 ```
 
 
