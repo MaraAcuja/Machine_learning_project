@@ -9,11 +9,10 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-<<<<<<< HEAD
 ```
 
 # notes
-```{r import_files, include=TRUE}
+```{r todos, include=TRUE}
 print("The paper talks abotu 73 different countries/areas, but when visualizing them there are fewer dots on the maps --> investigate")
 print("scatter plot für koordinaten und box plot für varianz in long und lat")
 print("boxplot für distances für jedes modell -> um diese vergleichen zu können")
@@ -90,19 +89,21 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 
 
 ```
+
 # some insights into the data
 ```{r insights, include=TRUE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
-<<<<<<< HEAD
+
 mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
 ```
-```{r insights, include=TRUE}
+
+```{r insights_2, include=TRUE}
 plot(data$Longitude, data$Latitude, xlim=c(-180, 180), ylim=c(-90, 90))
 ```
 
-```{r insights, include=TRUE}
+```{r insights_3, include=TRUE}
 df_lat <- data.frame(value = data$Latitude, dimension = "Latitude")
 df_long <- data.frame(value = data$Longitude, dimension = "Longitude")
 boxplot_df <- rbind(df_lat, df_long)
