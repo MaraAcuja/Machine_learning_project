@@ -21,7 +21,7 @@ print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt
 
 # librarys
 
-```{r import_libs, include=TRUE}
+```{r import_libs, include=TRUE, echo=FALSE}
 #install.packages("ggmap")
 #install.packages("maptools")
 #install.packages("maps")
@@ -45,7 +45,6 @@ library(rgl)
 # Comparison of machine learning algorithms / Introduction / Theory
 
 This report attempts to compare two regression/classification algorithms on its behaviour on a specific data set. What should be found out?
-This report attempts to compare two regression/classification algorithms on its behavior on a specific data set. What should be found out?
 
 
 # Data set
