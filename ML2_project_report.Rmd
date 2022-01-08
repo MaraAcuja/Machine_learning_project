@@ -3,7 +3,7 @@ title: "Machine learning II"
 subtitle: "Predicting the Geographical Origin of Music"
 author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
 date: "11.01.2022"
-bibliography: bibliography.bib
+#bibliography: bibliography.bib
 output:
   pdf_document: 
     toc: true
@@ -23,9 +23,61 @@ print("boxplot für distances für jedes modell -> um diese vergleichen zu könn
 print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzeigt und mit linien verbindet")
 ```
 
-# librarys
+```{r todos_from_matthias, include=TRUE}
+# remove the normal two model ridge regression and replace it by just the combined model (Should we or not?) [Matthias]
 
-```{r import_libs, include=TRUE}
+# rename Vys code chunks --> finished
+
+# have a look at the weights of the ridge regression and make a simplified model with less 
+# variables
+
+# test other model combinations for the NN to improve it. 
+
+# add the algorithm to the ridge regression --> finsihed
+
+# add a description to the distance metric [Matthias]
+
+# add a small text to the standardizsation of the data [Stefan]
+
+# change order of insights in the data and the main metrics 
+
+# "conspicuousness" --> new name and maybe the graph after the image of the map
+
+# remove locations without map below [Stefan]
+
+# text for the boxplot of latitude and longitude [Stefan]
+
+# where should be the data preparation? maybe more up at the insights [Matthias]
+
+### baseline as combined model as well? [Matthias]
+
+# force anova output just on one page [Matthias]
+
+## include the graphs of the cv as images [Matthias]
+
+# remove description text for sections (NN, Ridge Regression, Method, Data Set, Introduction) [Adriana]
+
+# more text to explain the findings of the NN. What does the numbers mean? [Vy, Adriana]
+
+# check the spelling of crossvalidation, cross validation, cross-validation, should be just one version
+
+
+## results 
+# compare boxplots of measurements there
+# compare values completely
+
+
+## text for conclusion
+
+
+#replace normal plots in ggplot
+#add + theme_bw() to each ggplot
+
+```
+
+
+
+```{r import_libs, include=TRUE, echo=FALSE}
 #install.packages("installr")
 #library("installr")
 #install.Rtools()
@@ -83,7 +135,7 @@ distances <- function(predicted, actual_value) {
 }
 ```
 
-```{r import_files, include=TRUE}
+```{r import_files, include=TRUE, echo=FALSE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
 data <- as.data.frame(data)
 colnames(data)[117:118] <- c("Latitude", "Longitude")
@@ -95,23 +147,11 @@ anyNA(data) # testing if there is at least a single NA -> but in this dataset th
 # Maybe some more pre-processing could be done here.
 anyDuplicated(data) # testing for duplicates -> 0 found
 
-# feature scaling
-
-# separate labels from features
-#label_column_names <- c("Longitude", "Latitude")
-#data_labels <- data[label_column_names]
-#data_features <- subset(data, select = -label_column_names)
-# scale features
-#data_features_scaled <- as.data.frame(scale(data_features))
-# add labels to the now scaled features
-#data <- cbind(data_features_scaled, data_labels)
-
-
 ```
 
 # some insights into the data
 
-```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold"}
+```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold", echo=FALSE}
 # check if data is already standardized
 
 # get columns without the target cols ("long" and "lat")
@@ -136,7 +176,7 @@ abline(h=0, col = "blue", lty=5)
 ```
 
 
-```{r insights_create_worldmap, include=TRUE}
+```{r insights_create_worldmap, include=TRUE, echo=FALSE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
@@ -163,12 +203,12 @@ sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tra
 
 The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some row are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
 
-```{r insights_draw_worldmap, include=TRUE}
+```{r insights_draw_worldmap, include=TRUE, echo=FALSE}
 plot(data$Longitude, data$Latitude, xlim=c(-180, 180), ylim=c(-90, 90))
 ```
 
 
-```{r insights_3, include=TRUE}
+```{r insights_3, include=TRUE, echo=FALSE}
 df_lat <- data.frame(value = data$Latitude, dimension = "Latitude")
 df_long <- data.frame(value = data$Longitude, dimension = "Longitude")
 boxplot_df <- rbind(df_lat, df_long)
@@ -224,7 +264,7 @@ mean(distances(pred.sig, data[test, c("Latitude","Longitude")])) ## final result
 ```
 
 An ANOVA was calculated to check if there is a significant difference between the two models. 
-```{r linear_regression_anova, include=TRUE}
+```{r linear_regression_anova, include=TRUE, echo=FALSE}
 anova(model.lm.all, model.lm.sig)
 ```
 
@@ -287,62 +327,30 @@ pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
 
 
 pred <- cbind(pred1, pred2)
+min(distances(pred, data[test, c("Latitude","Longitude")]))
 mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+```
+
+There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross validation. This process was done in a separate file as it took more than an hour to get a good value for 
+
+```{r ridge_multivariate_model, include=TRUE, echo=FALSE}
+ridge.mod.multivar <- glmnet(x[train,], y[train,], family = "mgaussian", alpha=0, lambda=0.070)
+pred.multivar <- predict(ridge.mod.multivar, s = 0.07, newx=x[test,])
+mean(distances(pred.multivar, data[test, c("Latitude","Longitude")])) ## final result in km
+
+#coef(ridge.mod.multivar)
+
+ridge.mod.mv.thresh <- glmnet(x[train,], y[train,], family = "mgaussian", alpha=0, lambda=0.70, thresh = 0.03)
+pred.mv.thresh <- predict(ridge.mod.mv.thresh, s = 0.7, newx=x[test,])
+mean(distances(pred.mv.thresh, data[test, c("Latitude","Longitude")])) ## final result in km
+
+#coef(ridge.mod.mv.thresh)
+
 ```
 
 
 
-
-```{r Matthias_playground_ridge, include=FALSE}
-grid <- 10^seq(10, -2, length=100)
-x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
-y <- data[, c("Latitude","Longitude")]
-#set.seed(100)
-
-
-## This is code for the evaluation how lambda for the models differ depending on the output variable (Latitude vs. Longitude)
-
-#outputs <- matrix(nrow=100, ncol=2)
-#for (r in 1:100) {
-#  out1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
-#  #plot(out1)
-#  bestlam <- out1$lambda.min
-#  outputs[r,1] <- bestlam
-#  out2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
-#  #plot(out2)
-#  bestlam <- out2$lambda.min
-#  outputs[r,2] <- bestlam
-#}
-
-#xx <- outputs[,1]
-#yy <- outputs[,2]
-#t.test(xx,yy)
-#boxplot(outputs)
-
-# Ridge regression with cross-validation depending on tw separate models
-ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
-plot(ridge.mod.1)
-bestlam1 <- ridge.mod.1$lambda.min
-
-ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
-plot(ridge.mod.2)
-bestlam2 <- ridge.mod.2$lambda.min
-
-# predictions for two separate models
-pred1 <- predict(ridge.mod.1, s=bestlam1, newx=x[test,])
-pred2 <- predict(ridge.mod.2, s=bestlam2, newx=x[test,])
-
-pred <- cbind(pred1, pred2)
-mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
-
-# predictions for a model using just one lambda (mean)
-pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
-pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
-
-
-pred <- cbind(pred1, pred2)
-mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
-
+```{r matthias_playground, include=TRUE}
 ```
 
 
