@@ -244,7 +244,7 @@ Short introduction of the first algorithm. What does it do? What are the strengt
 
 The first algorithm we tried was ridge regression. This algorithm is similar to a linear regression but while the linear regression tries to minimize the difference between the weighted input variables and the output data, the ridge regression adds a regularisation term on the input variables. 
 
-[Here has to be added the formula of the ridge regression]
+$ RSS + \lambda \sum_{j=1} ^{p} { \hat{ \beta _j}  } ^2 = \sum_{i=1} ^n (y_i - \hat { \beta_0 } - \sum_{j=1} ^p { \hat  {\beta_j} x_ij})^2 + \lambda \sum_{j=1} ^{p} { \hat{ \beta }  } ^2_j $
 
 In fact, this is a possibility to fight over-fitting. If lambda is big the model tends to just take the b0 into account. So the predicted value is the mean of the output variable. If lambda is small, then the model tends to be normal non-regularised model, hence the one from the linear regression. 
 
@@ -291,8 +291,6 @@ pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
 pred <- cbind(pred1, pred2)
 mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
-
-
 
 
 ```{r Matthias_playground_ridge, include=FALSE}
@@ -359,7 +357,7 @@ The NN takes all features from the training data and outputs two values for the 
 
 The results are visualized below.
 
-```{r Vy_playground_NNs, include=TRUE, echo=FALSE}
+```{r neural_network, include=TRUE, echo=FALSE}
 X_train<-as.matrix(x[train,])
 y_train<-as.matrix(y[train,])
 X_test<-as.matrix(x[test,])
@@ -418,7 +416,7 @@ mean(distances(y_train, y_preds_train))
 
 For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and use the MSE as well as the custom distance metric. We get the following results:
 
-```{r Vy_playground_NN_distance_metric, include=TRUE, echo=FALSE}
+```{r NN_distance_metric, include=TRUE, echo=FALSE}
 ### Test data ###
 
 # Predict the Latitude for the test data
@@ -436,8 +434,6 @@ mean(distances(y_test, y_pred))                   # 4122.794
 Here some tables, summaries or especially graphs should be shown here. Maybe this section should be separated into two to show the algorithms for themselves
 
 We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. First, in our implementation of ridge regression we are fitting two separate models in order to get the two desired output variables. Nevertheless, we know that latitude and longitude are correlated variables, fact that ridge regression doesn't take into account so we expected a bigger error than NN. In the contrary, above implementation of neural network is predicting two variables at once like examples given in paper. 
-
-#
 
 # Discussion
  
