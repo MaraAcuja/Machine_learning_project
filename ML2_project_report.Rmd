@@ -17,11 +17,16 @@ print("The paper talks abotu 73 different countries/areas, but when visualizing 
 print("scatter plot für koordinaten und box plot für varianz in long und lat")
 print("boxplot für distances für jedes modell -> um diese vergleichen zu können")
 print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt und mit linien verbindet")
+print("for pre-processing mabe a small whiskers plot, that proves that the data is already normalized")
 ```
 
 # librarys
 
 ```{r import_libs, include=TRUE}
+#install.packages("installr")
+#library("installr")
+#install.Rtools()
+
 #install.packages("ggmap")
 #install.packages("maptools")
 #install.packages("maps")
@@ -30,7 +35,7 @@ print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt
 #TODO the one below necessary?
 #install.packages("rgl")
 
-library(glmnet)
+library("glmnet")
 library("ggplot2")
 library("ggmap")
 library("maptools")
@@ -73,7 +78,6 @@ colnames(data)[117:118] <- c("Latitude", "Longitude")
 # Maybe some more preprocessing could be done here.
 anyNA(data) # testing if there is at least a single NA -> but in this dataset there isn't
 # Maybe some more pre-processing could be done here.
-anyNA(data) # testing if there is at least a single NA -> but in this data set there isn't
 anyDuplicated(data) # testing for duplicates -> 0 found
 
 # feature scaling
@@ -91,6 +95,32 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 ```
 
 # some insights into the data
+
+```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold"}
+# check if data is already standardized
+
+# get columns without the target cols ("long" and "lat")
+data_without_target_cols <- subset(data, select=-c(Latitude,Longitude))
+
+# for each column in the data get sd and median
+sd_per_col <- apply(data_without_target_cols, 2, sd) # the two stands for columns, if we would have used 1 it would calculate the sd of the rows
+sd_per_col_df <- data.frame(sd_per_col)
+
+mean_per_col <- apply(data_without_target_cols, 2, mean)
+mean_per_col_df <- data.frame(mean_per_col)
+
+sd_and_mean_per_col_df <- merge(sd_per_col_df, mean_per_col_df, by="row.names", all=TRUE)
+
+#par(mar = c(4, 4, .1, .1)) # to make the two plots show side by side and not above each other
+
+boxplot(sd_per_col, data=sd_and_mean_per_col_df, xlab="standard deviation (blue line at 1)", y_lab="value", main="standard deviation of the 116 columns")
+abline(h=1, col = "blue", lty=5)
+
+boxplot(mean_per_col, data=sd_and_mean_per_col_df, xlab="mean (blue line at 0)", y_lab="value", main="mean of the 116 columns")
+abline(h=0, col = "blue", lty=5)
+```
+
+
 ```{r insights, include=TRUE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
