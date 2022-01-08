@@ -2,6 +2,7 @@
 title: "Machine learning 2"
 author: "Mara Acuja"
 date: "24 11 2021"
+bibliography: bibliography.bib
 output:
   pdf_document: default
   html_document: default
@@ -13,10 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # notes
 ```{r todos, include=TRUE}
-print("The paper talks abotu 73 different countries/areas, but when visualizing them there are fewer dots on the maps --> investigate")
-print("scatter plot für koordinaten und box plot für varianz in long und lat")
+print("scatter plot für koordinaten und box plot für varianz in long und lat") # why did we want this? its in the project, but the scatter plot is basically just the map without the cool parts 
 print("boxplot für distances für jedes modell -> um diese vergleichen zu können")
-print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt und mit linien verbindet")
+print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzeigt und mit linien verbindet")
 ```
 
 # librarys
@@ -58,6 +58,13 @@ Here should be a bit of a short summary of the data set with some key characteri
 
 What is it about? Which variables are included? What type of variables?
 What is missing? What about missing values?
+
+The data used in this project is provided by the authors of the paper "Predicting the Geographical Origin of Music"[@Zhou2015 how crated and used this set as basis for this paper. The key information embedded in this data set are attributes of music pieces labeled by there point of origin.
+
+The authors collected 1,142 pieces of music from a personal CD-collection. The target values represented by longitude and latitude are the main country/area of residence of the artists that produced the music. Over all the authors collected music from 73 countries/areas not including western style music, since this category is called to have a global influence and therefor unfitted for predicting a specific country/region. 
+
+The attributes to describe the music pieces are automatically created by a software called MARSYAS[@tzanetakis2007marsyas], a software created to extract audio features from wave files. With MARSYAS the authors could convert every music peace to a set of 116 features called 'chromatic features'. The features are numerical and the authors claim to have normalized them into a gaussian normal distribution.
+
 
 ```{r functions, include=TRUE}
 distances <- function(predicted, actual_value) {
@@ -345,23 +352,3 @@ How precise do we predict the cities? How far is the difference in kilometers? T
 
 # Conclusion
 At final some conclusions about the key findings and which algorithm should be used. What was the goal? Were and how were they achieved?
-
-# RMarkdown default stuff - needs to be removed but serves up to now as draft
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
