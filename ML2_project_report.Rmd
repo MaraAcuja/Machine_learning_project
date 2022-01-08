@@ -9,11 +9,17 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
 
+# notes
+```{r import_files, include=TRUE}
+print("The paper talks abotu 73 different countries/areas, but when visualizing them there are fewer dots on the maps --> investigate")
+print("scatter plot für koordinaten und box plot für varianz in long und lat")
+print("boxplot für distances für jedes modell -> um diese vergleichen zu können")
+print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt und mit linien verbindet")
 ```
 
 # librarys
-
 ```{r import_files, include=TRUE}
 install.packages("ggmap")
 install.packages("maptools")
@@ -40,20 +46,44 @@ What is missing? What about missing values?
 ```{r import_files, include=TRUE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
 data <- as.data.frame(data)
-colnames(data)[117:118] <- c("Longitude", "Latitude")
+colnames(data)[117:118] <- c("Latitude", "Longitude")
 ```
 
 ```{r preprocessing, include=TRUE}
 # Maybe some more pre-processing could be done here.
 anyNA(data) # testing if there is at least a single NA -> but in this data set there isn't
 anyDuplicated(data) # testing for duplicates -> 0 found
-```
 
+# feature scaling
+
+# separate labels from features
+#label_column_names <- c("Longitude", "Latitude")
+#data_labels <- data[label_column_names]
+#data_features <- subset(data, select = -label_column_names)
+# scale features
+#data_features_scaled <- as.data.frame(scale(data_features))
+# add labels to the now scaled features
+#data <- cbind(data_features_scaled, data_labels)
+
+
+```
+# some insights into the data
 ```{r insights, include=TRUE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
-mp + geom_point(data = data, aes(x = Latitude, y = Longitude), color = "red", alpha = 0.5)
+mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
+```
+```{r insights, include=TRUE}
+plot(data$Longitude, data$Latitude, xlim=c(-180, 180), ylim=c(-90, 90))
+```
+
+```{r insights, include=TRUE}
+df_lat <- data.frame(value = data$Latitude, dimension = "Latitude")
+df_long <- data.frame(value = data$Longitude, dimension = "Longitude")
+boxplot_df <- rbind(df_lat, df_long)
+
+boxplot(value~dimension, data=boxplot_df)
 ```
 
 ```{r split_into_test_and_train, include=TRUE}
