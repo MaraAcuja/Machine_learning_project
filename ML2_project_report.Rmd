@@ -352,11 +352,10 @@ mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in 
 Short introduction of the second algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
 
 For the second algorithm we'll be using Artificial Neural Networks (NNs) as they can be used for regression problems as well. 
-To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimising the loss function, which for NN-regression is the mean of squared errors MSE over the training set.
+To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimizing the loss function, which for NN-regression is the mean of squared errors MSE over the training set.
 In the case of fitting a neural network, it is much faster if the data are scaled/normalised first and also gives more appropriate results if the features that are used have different scales and ranges. But this is already the case here.
 
-The NN takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression.
-Inbetween Input and Output Layer are a few more layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
+The NN takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression. In-between Input and Output Layer are a few more layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
 
 The results are visualized below.
 
@@ -436,13 +435,22 @@ mean(distances(y_test, y_pred))                   # 4122.794
 # Results
 Here some tables, summaries or especially graphs should be shown here. Maybe this section should be separated into two to show the algorithms for themselves
 
+We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. 
+
 
 # Discussion
+ 
 Here follows the discussion of the results. What are the major findings? How did the algorithms perform? Which one was better overall? Is it always better or were the findings which were better by the other one?
 Which one should be implemented? How could the algorithm be tweaked to perform even better?
 Where were the problems during implementation? Where are the limits for the algorithms?
-
 How precise do we predict the cities? How far is the difference in kilometers? The authors of the paper where the dataset comes from have a mean great circle error of 3113km? Are we above or below and by how much?
+
+As we introduced, predicting data points on the Earth using a latitude/longitude representation adds complexity to our problem because of the natural characteristics of coordinates. In first place longitude is discontinuous, meaning that the longitude of two points geographicallly near might be significantly different and secondly because coordinates are not linear. 
+
+If we compare the two models applied by looking at MSE we know that neural network performs better than ridge regression. However the difference is not big ___ km. Nevertheless, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km
+
+
+
 
 
 # Conclusion
