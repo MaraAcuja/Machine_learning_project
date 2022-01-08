@@ -437,6 +437,8 @@ Here some tables, summaries or especially graphs should be shown here. Maybe thi
 
 We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. First, in our implementation of ridge regression we are fitting two separate models in order to get the two desired output variables. Nevertheless, we know that latitude and longitude are correlated variables, fact that ridge regression doesn't take into account so we expected a bigger error than NN. In the contrary, above implementation of neural network is predicting two variables at once like examples given in paper. 
 
+#
+
 # Discussion
  
 Here follows the discussion of the results. What are the major findings? How did the algorithms perform? Which one was better overall? Is it always better or were the findings which were better by the other one?
