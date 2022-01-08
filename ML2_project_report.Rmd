@@ -1,11 +1,15 @@
 ---
 title: "Machine learning II"
+subtitle: "Predicting the Geographical Origin of Music"
 author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
 date: "11.01.2022"
 bibliography: bibliography.bib
 output:
-  pdf_document: default
+  pdf_document: 
+    toc: true
+    toc_depth: 2
   html_document: default
+  
 ---
 
 ```{r setup, include=FALSE}
