@@ -17,12 +17,10 @@ print("The paper talks abotu 73 different countries/areas, but when visualizing 
 print("scatter plot für koordinaten und box plot für varianz in long und lat")
 print("boxplot für distances für jedes modell -> um diese vergleichen zu können")
 print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt und mit linien verbindet")
-print("for pre-processing mabe a small whiskers plot, that proves that the data is already normalized")
 ```
 
 # librarys
 
-<<<<<<< HEAD
 ```{r import_libs, include=TRUE}
 #install.packages("installr")
 #library("installr")
@@ -50,7 +48,7 @@ library(rgl)
 
 # Comparison of machine learning algorithms / Introduction / Theory
 
-This report attempts to compare two regression/classification algorithms on its behaviour on a specific data set. What should be found out?
+This report attempts to compare two regression/classification algorithms on its behavior on a specific data set. What should be found out?
 
 
 # Data set
@@ -317,10 +315,10 @@ Here some tables, summaries or especially graphs should be shown here. Maybe thi
 
 # Discussion
 Here follows the discussion of the results. What are the major findings? How did the algorithms perform? Which one was better overall? Is it always better or were the findings which were better by the other one?
-Which one should be implemented? How could the algorithm be tweeked to perform even better?
+Which one should be implemented? How could the algorithm be tweaked to perform even better?
 Where were the problems during implementation? Where are the limits for the algorithms?
 
-How precise do we predict the cities? How far is the difference in kilometres? The authors of the paper where the dataset comes from have a mean great circle error of 3113km? Are we above or below and by how much?
+How precise do we predict the cities? How far is the difference in kilometers? The authors of the paper where the dataset comes from have a mean great circle error of 3113km? Are we above or below and by how much?
 
 
 # Conclusion
