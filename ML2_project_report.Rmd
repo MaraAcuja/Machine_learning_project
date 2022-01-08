@@ -34,6 +34,8 @@ print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzei
 #TODO the one below necessary?
 #install.packages("rgl")
 #install.packages("dplyr")
+#install.packages("keras")
+#install.packages("tensorflow")
 
 library("glmnet")
 library("ggplot2")
@@ -199,7 +201,7 @@ The predictions are on average quite far from the true destination:
 mean(distances(pred.all, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
-The impact of the variables was analysed. It seemed that not all of them have a significant influence on the models. So a second model was developed, just using the variable which have a significiant influence on the full model, either on the Latitude or on the Longitude. 
+The impact of the variables was analysed. It seemed that not all of them have a significant influence on the models. So a second model was developed, just using the variable which have a significant influence on the full model, either on the Latitude or on the Longitude. 
 
 
 ```{r linear_regression_significant_variables, include=TRUE}
@@ -242,6 +244,8 @@ The command glmnet is used to perform the ridge regression. Cross-validation is 
 ```{r ridge_data_preparation, include=TRUE, echo=FALSE}
 x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
 y <- data[, c("Latitude","Longitude")]
+
+print(class(y['Latitude']))
 ```
 
 ```{r ridge_data_cv, include=TRUE, echo=FALSE}
@@ -277,17 +281,14 @@ pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
 pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
 
 
-pred <- cbind(pred1, pred2)
-mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+pred_ridge_regression <- cbind(pred1, pred2)
+mean(distances(pred_ridge_regression, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
-
-
-
 ```{r Matthias_playground_ridge, include=FALSE}
-grid <- 10^seq(10, -2, length=100)
-x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
-y <- data[, c("Latitude","Longitude")]
+#grid <- 10^seq(10, -2, length=100)
+#x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
+#y <- data[, c("Latitude","Longitude")]
 #set.seed(100)
 
 
@@ -311,28 +312,28 @@ y <- data[, c("Latitude","Longitude")]
 #boxplot(outputs)
 
 # Ridge regression with cross-validation depending on tw separate models
-ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
-plot(ridge.mod.1)
-bestlam1 <- ridge.mod.1$lambda.min
+#ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
+#plot(ridge.mod.1)
+#bestlam1 <- ridge.mod.1$lambda.min
 
-ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
-plot(ridge.mod.2)
-bestlam2 <- ridge.mod.2$lambda.min
+#ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
+#plot(ridge.mod.2)
+#bestlam2 <- ridge.mod.2$lambda.min
 
 # predictions for two separate models
-pred1 <- predict(ridge.mod.1, s=bestlam1, newx=x[test,])
-pred2 <- predict(ridge.mod.2, s=bestlam2, newx=x[test,])
+#pred1 <- predict(ridge.mod.1, s=bestlam1, newx=x[test,])
+#pred2 <- predict(ridge.mod.2, s=bestlam2, newx=x[test,])
 
-pred <- cbind(pred1, pred2)
-mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+#pred <- cbind(pred1, pred2)
+#mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
 
 # predictions for a model using just one lambda (mean)
-pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
-pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
+#pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
+#pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
 
 
-pred <- cbind(pred1, pred2)
-mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+#pred <- cbind(pred1, pred2)
+#mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
 
 ```
 
@@ -401,7 +402,7 @@ legend("bottomright", c("train","val_train"), col=c("blue", "green"), lty=c(1,1)
 ### Test data ###
 
 # Predict the Latitude for the test data
-y_pred <- model %>% predict(X_test, batch_size = 128)
+y_pred_neural_net <- model %>% predict(X_test, batch_size = 128)
 
 ```
 
@@ -409,13 +410,85 @@ For evaluation we predict the Longitude and Latitude for the same test data as f
 
 ```{r Vy_playground_NN_distance_metric, include=TRUE, echo=FALSE}
 # Evaluate on test data and labels with customized distance me
-mean(distances(y_test, y_pred))                   # 4122.794
+mean(distances(y_test, y_pred_neural_net))                   # 4122.794
 
 ```
 
-
 # Results
+
+```{r final_map_for_comparison, include=TRUE, echo=FALSE}
+# y[test,]
+target_values <- data.frame (Latitude = y[test,1],
+                             Longitude = y[test,2])
+
+target_values$index <- 1:nrow(target_values)
+target_values$source <- "Original"
+
+# y_pred_neural_net
+neural_net_results <- data.frame (Latitude = y_pred_neural_net[,1],
+                                  Longitude = y_pred_neural_net[,2])
+neural_net_results$index <- 1:nrow(neural_net_results)
+neural_net_results$source <- "NeuralNet"
+
+# pred_ridge_regression
+ridge_regression_results <- data.frame (Latitude = pred_ridge_regression[,1],
+                                        Longitude = pred_ridge_regression[,2])
+ridge_regression_results$index <- 1:nrow(ridge_regression_results)
+ridge_regression_results$source <- "RidgeRegression"
+
+
+dim(target_values)
+dim(neural_net_results)
+dim(ridge_regression_results)
+
+aggregated_results_ridge_regression <- rbind(target_values, ridge_regression_results)
+aggregated_results_neural_net <- rbind(target_values, neural_net_results)
+
+
+
+nrow(aggregated_results_neural_net) # there are 1271 rows in each df
+
+# because there are so many rows in each df we selct only 10% for the visualization
+aggregated_results_ridge_regression_10_percent = aggregated_results_ridge_regression[aggregated_results_ridge_regression$index %% 10 == 0,]
+
+aggregated_results_neural_net_10_percent = aggregated_results_neural_net[aggregated_results_neural_net$index %% 10 == 0,]
+
+mapWorld <- borders("world", colour="gray50", fill="white")
+mp <- ggplot() + mapWorld +
+  geom_point(size = 1, data = aggregated_results_ridge_regression_10_percent, aes(Longitude, Latitude, group=index, color=source)) +
+  geom_line(data = aggregated_results_ridge_regression_10_percent, aes(Longitude, Latitude, group=index, color="RidgeRegression")) +
+  geom_point(size = 1, data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color=source)) +
+  geom_line(data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color="NeuralNet"))
+mp
+```
+
 Here some tables, summaries or especially graphs should be shown here. Maybe this section should be separated into two to show the algorithms for themselves
+
+target_values <- data.frame (Latitude = c(-15.75, 14.91, 12.65),
+                             Longitude = c(-47.95, -23.51, -8.00))
+target_values$index <- 1:nrow(target_values)
+target_values$source <- "Original"
+
+neural_net_results <- data.frame (Latitude = c(2.274030, 23.708105, 54.149323),
+                                  Longitude = c(-23.0598640, 41.1416664, 14.7137728))
+neural_net_results$index <- 1:nrow(neural_net_results)
+neural_net_results$source <- "NeuralNet"
+
+ridge_regression_results <- data.frame (Latitude = c(14.827996, 27.492521, 45.357388),
+                                        Longitude = c(-8.6322704, 39.3965714, 32.7124573))
+ridge_regression_results$index <- 1:nrow(ridge_regression_results)
+ridge_regression_results$source <- "RidgeRegression"
+
+aggregated_results_ridge_regression <- rbind(target_values, ridge_regression_results)
+aggregated_results_neural_net <- rbind(target_values, neural_net_results)
+
+mapWorld <- borders("world", colour="gray50", fill="white")
+mp_2 <- ggplot() + mapWorld +
+  geom_point(size = 2, data = aggregated_results_ridge_regression, aes(Longitude, Latitude, group=index, color=source)) +
+  geom_line(data = aggregated_results_ridge_regression, aes(Longitude, Latitude, group=index, color="RidgeRegression")) +
+  geom_point(size = 2, data = aggregated_results_neural_net, aes(Longitude, Latitude, group=index, color=source)) +
+  geom_line(data = aggregated_results_neural_net, aes(Longitude, Latitude, group=index, color="NeuralNet"))
+mp_2
 
 
 # Discussion
