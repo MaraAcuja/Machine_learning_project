@@ -447,7 +447,7 @@ How precise do we predict the cities? How far is the difference in kilometers? T
 
 As we introduced, predicting data points on the Earth using a latitude/longitude representation adds complexity to our problem because of the natural characteristics of coordinates. In first place longitude is discontinuous, meaning that the longitude of two points geographicallly near might be significantly different and secondly because coordinates are not linear. 
 
-If we compare the two models applied by looking at MSE we know that neural network performs better than ridge regression. However the difference is not big ___ km. Nevertheless, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km
+If we compare the two models applied by looking at MSE we know that neural network performs better than ridge regression. However the difference is not big ___ km. Nevertheless, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km.
 
 
 
