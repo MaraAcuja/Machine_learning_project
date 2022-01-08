@@ -46,6 +46,9 @@ library(ISLR)
 options(rgl.printRglwidget = TRUE)
 library(rgl)
 
+library(keras)
+library(tensorflow)
+
 ```
 
 # Comparison of machine learning algorithms / Introduction / Theory
@@ -336,6 +339,79 @@ mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in 
 
 ## Algorithm 2
 Short introduction of the second algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
+
+For the second algorithm we'll be using Artificial Neural Networks (NNs) as they can be used for regression problems as well. 
+To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimising the loss function, which for NN-regression is the mean of squared errors MSE over the training set.
+In the case of fitting a neural network, it is much faster if the data are scaled/normalised first and also gives more appropriate results if the features that are used have different scales and ranges. But this is already the case here.
+
+The NN takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression.
+Inbetween Input and Output Layer are a few more layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
+
+The results are visualized below.
+
+```{r Vy_playground_NNs, include=TRUE, echo=FALSE}
+X_train<-as.matrix(x[train,])
+y_train<-as.matrix(y[train,])
+X_test<-as.matrix(x[test,])
+y_test<-as.matrix(y[test,])
+
+# Initialize a sequential model
+model <- keras_model_sequential() 
+
+# Add layers to the model
+model %>% 
+    layer_dense(units=64, activation = "relu", input_shape = c(116)) %>% 
+    #layer_dense(units=32, activation = "relu") %>% 
+    layer_dense(units=16, activation = "relu") %>% 
+    layer_dense(units=8, activation = "relu") %>% 
+    #layer_dense(units=4, activation = "relu") %>% 
+    layer_dense(units=2, activation="linear")
+
+# Compile the model
+model %>% compile(
+     loss = 'mse',
+     optimizer = 'adam',
+     metrics = list("mean_squared_error")
+ )
+
+model %>% summary()
+
+# Fit the model and store the fitting history in `history` 
+history <- model %>% fit(
+     X_train, 
+     y_train, 
+     epochs = 100,
+     batch_size = 128, 
+     validation_split = 0.2
+ )
+
+# Plot the history
+plot(history)
+
+# Plot the accuracy of the training data 
+plot(history$metrics$mean_squared_error, main="Model's Mean Squared Error", xlab = "epoch", ylab="mae", col="blue", type="l")
+
+# Plot the accuracy of the validation data
+lines(history$metrics$val_mean_squared_error, col="green")
+
+# Add Legend
+legend("bottomright", c("train","val_train"), col=c("blue", "green"), lty=c(1,1))
+
+
+### Test data ###
+
+# Predict the Latitude for the test data
+y_pred <- model %>% predict(X_test, batch_size = 128)
+
+```
+
+For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and also use the custom distances metric. We get the following result:
+
+```{r Vy_playground_NN_distance_metric, include=TRUE, echo=FALSE}
+# Evaluate on test data and labels with customized distance me
+mean(distances(y_test, y_pred))                   # 4122.794
+
+```
 
 
 # Results
