@@ -33,12 +33,14 @@ print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt
 #install.packages("ISLR")
 #TODO the one below necessary?
 #install.packages("rgl")
+#install.packages("dplyr")
 
 library("glmnet")
 library("ggplot2")
 library("ggmap")
 library("maptools")
 library("maps")
+library("dplyr")
 
 library(ISLR)
 options(rgl.printRglwidget = TRUE)
@@ -119,7 +121,7 @@ abline(h=0, col = "blue", lty=5)
 ```
 
 
-```{r insights, include=TRUE}
+```{r insights_create_worldmap, include=TRUE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
@@ -127,9 +129,29 @@ mp <- ggplot() + mapWorld
 mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
 ```
 
-```{r insights_2, include=TRUE}
+# conspicuousness
+When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returnes 33 data points. The following code investigates this difference.
+
+```{r insights_the_region_conspiracy, include=TRUE}
+# investigate why there are fewer points on the map than regions on the map
+# data is the full data set
+
+# group data by unique combinations of long and lat and safe in data frame
+# and count occurrences of each unique combination
+# the unique combinations of long and lat represent regions
+occurences_per_region <- data.frame(data %>% count(Longitude, Latitude, sort=TRUE))
+
+nrow(occurences_per_region) # returns 33 -> 33 regions in the data set and not 71 like proposed in the paper -> maybe not all data has been uploaded 
+
+sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tracks in the data set
+```
+
+The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some row are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
+
+```{r insights_draw_worldmap, include=TRUE}
 plot(data$Longitude, data$Latitude, xlim=c(-180, 180), ylim=c(-90, 90))
 ```
+
 
 ```{r insights_3, include=TRUE}
 df_lat <- data.frame(value = data$Latitude, dimension = "Latitude")
@@ -259,7 +281,7 @@ y <- data[, c("Latitude","Longitude")]
 #set.seed(100)
 
 
-## This is code for the evalutation how lambda for the models differ depending on the output variable (Latitude vs. Longitude)
+## This is code for the evaluation how lambda for the models differ depending on the output variable (Latitude vs. Longitude)
 
 #outputs <- matrix(nrow=100, ncol=2)
 #for (r in 1:100) {
