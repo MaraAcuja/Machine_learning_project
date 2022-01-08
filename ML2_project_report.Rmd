@@ -1,11 +1,15 @@
 ---
-title: "Machine learning 2"
-author: "Mara Acuja"
-date: "24 11 2021"
+title: "Machine learning II"
+subtitle: "Predicting the Geographical Origin of Music"
+author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
+date: "11.01.2022"
 bibliography: bibliography.bib
 output:
-  pdf_document: default
+  pdf_document: 
+    toc: true
+    toc_depth: 2
   html_document: default
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -57,6 +61,7 @@ library(tensorflow)
 
 This report attempts to compare two regression/classification algorithms on its behavior on a specific data set. What should be found out?
 
+Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found interesting trying to apply some machine learning algorithms: ridge regression and neural networks  and compare its results.  
 
 # Data set
 Here should be a bit of a short summary of the data set with some key characteristics of the data set.
@@ -70,6 +75,9 @@ The authors collected 1,142 pieces of music from a personal CD-collection. The t
 
 The attributes to describe the music pieces are automatically created by a software called MARSYAS[@tzanetakis2007marsyas], a software created to extract audio features from wave files. With MARSYAS the authors could convert every music peace to a set of 116 features called 'chromatic features'. The features are numerical and the authors claim to have normalized them into a gaussian normal distribution.
 
+Selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output, coordinates.
+
+In order to deal with our spatial output data we'd created a function to scale from our predicted and real values for further model evaluation.
 
 ```{r functions, include=TRUE}
 distances <- function(predicted, actual_value) {
@@ -141,8 +149,8 @@ mp <- ggplot() + mapWorld
 mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
 ```
 
-# conspicuousness
-When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returnes 33 data points. The following code investigates this difference.
+# Conspicuousness
+When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returns 33 data points. The following code investigates this difference.
 
 ```{r insights_the_region_conspiracy, include=TRUE}
 # investigate why there are fewer points on the map than regions on the map
@@ -184,6 +192,9 @@ test <- (1:n)[-train]
 
 # Method
 Short summary about the algorithms. Which are used? What do we do? Classification or Regression?
+
+We treat the problem of predicting the geographical origin of music as a regression problem since we want to predict the spherical coordinates (longitude and latitude).
+In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric: The geographical distance from the true position.
 
 ## Baseline - Linear Regression
 
@@ -235,7 +246,7 @@ Short introduction of the first algorithm. What does it do? What are the strengt
 
 The first algorithm we tried was ridge regression. This algorithm is similar to a linear regression but while the linear regression tries to minimize the difference between the weighted input variables and the output data, the ridge regression adds a regularisation term on the input variables. 
 
-[Here has to be added the formula of the ridge regression]
+$$RSS + \lambda \sum_{j=1} ^{p} { \hat{ \beta _j}  } ^2 = \sum_{i=1} ^n (y_i - \hat { \beta_0 } - \sum_{j=1} ^p { \hat  {\beta_j}x_ij})^2 + \lambda \sum_{j=1} ^{p} { \hat{ \beta }  } ^2_j$$
 
 In fact, this is a possibility to fight over-fitting. If lambda is big the model tends to just take the b0 into account. So the predicted value is the mean of the output variable. If lambda is small, then the model tends to be normal non-regularised model, hence the one from the linear regression. 
 
@@ -243,7 +254,7 @@ The command glmnet is used to perform the ridge regression. Cross-validation is 
 
 ```{r ridge_data_preparation, include=TRUE, echo=FALSE}
 x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
-y <- data[, c("Latitude","Longitude")]
+y <- data[, c("Latitude", "Longitude")]
 
 print(class(y['Latitude']))
 ```
@@ -338,19 +349,18 @@ mean(distances(pred_ridge_regression, data[test, c("Latitude","Longitude")])) ##
 ```
 
 
-## Algorithm 2
+## Algorithm 2 - Artificial Neural Networks (NNs)
 Short introduction of the second algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
 
 For the second algorithm we'll be using Artificial Neural Networks (NNs) as they can be used for regression problems as well. 
-To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimising the loss function, which for NN-regression is the mean of squared errors MSE over the training set.
+To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimizing the loss function, which for NN-regression is the mean of squared errors MSE over the training set.
 In the case of fitting a neural network, it is much faster if the data are scaled/normalised first and also gives more appropriate results if the features that are used have different scales and ranges. But this is already the case here.
 
-The NN takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression.
-Inbetween Input and Output Layer are a few more layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
+The NN takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression. In-between Input and Output Layer are a few more layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
 
 The results are visualized below.
 
-```{r Vy_playground_NNs, include=TRUE, echo=FALSE}
+```{r neural_network, include=TRUE, echo=FALSE}
 X_train<-as.matrix(x[train,])
 y_train<-as.matrix(y[train,])
 X_test<-as.matrix(x[test,])
@@ -372,7 +382,7 @@ model %>%
 model %>% compile(
      loss = 'mse',
      optimizer = 'adam',
-     metrics = list("mean_squared_error")
+     metrics = list("mean_squared_error", "mean_absolute_error")
  )
 
 model %>% summary()
@@ -389,29 +399,36 @@ history <- model %>% fit(
 # Plot the history
 plot(history)
 
-# Plot the accuracy of the training data 
+# Plot the MSE of the training data 
 plot(history$metrics$mean_squared_error, main="Model's Mean Squared Error", xlab = "epoch", ylab="mae", col="blue", type="l")
 
-# Plot the accuracy of the validation data
+# Plot the MSE of the validation data
 lines(history$metrics$val_mean_squared_error, col="green")
 
 # Add Legend
-legend("bottomright", c("train","val_train"), col=c("blue", "green"), lty=c(1,1))
+legend("topright", c("train","val_train"), col=c("blue", "green"), lty=c(1,1))
 
+# MSE of train data
+y_preds_train<-model %>% predict(X_train)
+mean((y_train - y_preds_train)^2)
 
+# Customized distance metric
+mean(distances(y_train, y_preds_train)) 
+```
+
+For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and use the MSE as well as the custom distance metric. We get the following results:
+
+```{r NN_distance_metric, include=TRUE, echo=FALSE}
 ### Test data ###
 
 # Predict the Latitude for the test data
-y_pred_neural_net <- model %>% predict(X_test, batch_size = 128)
+y_pred_neural_net <- model %>% predict(X_test)
 
-```
+# Evaluate with MSE
+mean((y_test - y_pred_neural_net)^2)
 
-For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and also use the custom distances metric. We get the following result:
-
-```{r Vy_playground_NN_distance_metric, include=TRUE, echo=FALSE}
-# Evaluate on test data and labels with customized distance me
+# Evaluate on test data and labels with customized distance metric
 mean(distances(y_test, y_pred_neural_net))                   # 4122.794
-
 ```
 
 # Results
@@ -464,39 +481,18 @@ mp
 
 Here some tables, summaries or especially graphs should be shown here. Maybe this section should be separated into two to show the algorithms for themselves
 
-target_values <- data.frame (Latitude = c(-15.75, 14.91, 12.65),
-                             Longitude = c(-47.95, -23.51, -8.00))
-target_values$index <- 1:nrow(target_values)
-target_values$source <- "Original"
-
-neural_net_results <- data.frame (Latitude = c(2.274030, 23.708105, 54.149323),
-                                  Longitude = c(-23.0598640, 41.1416664, 14.7137728))
-neural_net_results$index <- 1:nrow(neural_net_results)
-neural_net_results$source <- "NeuralNet"
-
-ridge_regression_results <- data.frame (Latitude = c(14.827996, 27.492521, 45.357388),
-                                        Longitude = c(-8.6322704, 39.3965714, 32.7124573))
-ridge_regression_results$index <- 1:nrow(ridge_regression_results)
-ridge_regression_results$source <- "RidgeRegression"
-
-aggregated_results_ridge_regression <- rbind(target_values, ridge_regression_results)
-aggregated_results_neural_net <- rbind(target_values, neural_net_results)
-
-mapWorld <- borders("world", colour="gray50", fill="white")
-mp_2 <- ggplot() + mapWorld +
-  geom_point(size = 2, data = aggregated_results_ridge_regression, aes(Longitude, Latitude, group=index, color=source)) +
-  geom_line(data = aggregated_results_ridge_regression, aes(Longitude, Latitude, group=index, color="RidgeRegression")) +
-  geom_point(size = 2, data = aggregated_results_neural_net, aes(Longitude, Latitude, group=index, color=source)) +
-  geom_line(data = aggregated_results_neural_net, aes(Longitude, Latitude, group=index, color="NeuralNet"))
-mp_2
-
+We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. First, in our implementation of ridge regression we are fitting two separate models in order to get the two desired output variables. Nevertheless, we know that latitude and longitude are correlated variables, fact that ridge regression doesn't take into account so we expected a bigger error than NN. In the contrary, above implementation of neural network is predicting two variables at once like examples given in paper. 
 
 # Discussion
+ 
 Here follows the discussion of the results. What are the major findings? How did the algorithms perform? Which one was better overall? Is it always better or were the findings which were better by the other one?
 Which one should be implemented? How could the algorithm be tweaked to perform even better?
 Where were the problems during implementation? Where are the limits for the algorithms?
-
 How precise do we predict the cities? How far is the difference in kilometers? The authors of the paper where the dataset comes from have a mean great circle error of 3113km? Are we above or below and by how much?
+
+As we introduced, predicting data points on the Earth using a latitude/longitude representation adds complexity to our problem because of the natural characteristics of coordinates. In first place longitude is discontinuous, meaning that the longitude of two points geographically near might be significantly different and secondly because coordinates are not linear. 
+
+If we compare the two models applied by looking at MSE we know that neural network performs better than ridge regression, as we assumed.However the difference is not big ___ km. Nevertheless, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km.
 
 
 # Conclusion
