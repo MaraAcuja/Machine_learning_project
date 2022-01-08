@@ -21,7 +21,7 @@ print("für finales ergebniss, ein karte, welche ist und soll koorinaten anzeigt
 
 # librarys
 
-```{r import_libs, include=TRUE, echo=FALSE}
+```{r import_libs, include=FALSE, echo=FALSE}
 #install.packages("ggmap")
 #install.packages("maptools")
 #install.packages("maps")
