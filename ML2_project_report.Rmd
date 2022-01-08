@@ -59,6 +59,7 @@ library(tensorflow)
 
 This report attempts to compare two regression/classification algorithms on its behavior on a specific data set. What should be found out?
 
+Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found interesting trying to apply some machine learning algorithms: ridge regression and neural networks  and compare its results.  
 
 # Data set
 Here should be a bit of a short summary of the data set with some key characteristics of the data set.
@@ -73,6 +74,8 @@ The authors collected 1,142 pieces of music from a personal CD-collection. The t
 The attributes to describe the music pieces are automatically created by a software called MARSYAS[@tzanetakis2007marsyas], a software created to extract audio features from wave files. With MARSYAS the authors could convert every music peace to a set of 116 features called 'chromatic features'. The features are numerical and the authors claim to have normalized them into a gaussian normal distribution.
 
 Selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output, coordinates.
+
+In order to deal with our spatial output data we'd created a function to scale from our predicted and real values for further model evaluation.
 
 ```{r functions, include=TRUE}
 distances <- function(predicted, actual_value) {
@@ -145,7 +148,7 @@ mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", al
 ```
 
 # Conspicuousness
-When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returnes 33 data points. The following code investigates this difference.
+When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returns 33 data points. The following code investigates this difference.
 
 ```{r insights_the_region_conspiracy, include=TRUE}
 # investigate why there are fewer points on the map than regions on the map
@@ -189,8 +192,7 @@ test <- (1:n)[-train]
 Short summary about the algorithms. Which are used? What do we do? Classification or Regression?
 
 We treat the problem of predicting the geographical origin of music as a regression problem since we want to predict the spherical coordinates (longitude and latitude).
-In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric:
-The geographical distance from the true position.
+In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric: The geographical distance from the true position.
 
 ## Baseline - Linear Regression
 
