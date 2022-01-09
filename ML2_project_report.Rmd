@@ -35,23 +35,23 @@ print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzei
 
 # add the algorithm to the ridge regression --> finsihed
 
-# add a description to the distance metric [Matthias]
+# add a description to the distance metric [Matthias] --> finished
 
 # add a small text to the standardizsation of the data [Stefan]
 
-# change order of insights in the data and the main metrics 
+# change order of insights in the data and the main metrics --> finished 
 
 # "conspicuousness" --> new name and maybe the graph after the image of the map
 
-# remove locations without map below [Stefan]
+# remove locations without map below [Stefan] --> finished
 
 # text for the boxplot of latitude and longitude [Stefan]
 
-# where should be the data preparation? maybe more up at the insights [Matthias]
+# where should be the data preparation? maybe more up at the insights [Matthias] --> finished
 
 ### baseline as combined model as well? [Matthias]
 
-# force anova output just on one page [Matthias]
+# force anova output just on one page [Matthias] --> too complicated
 
 ## include the graphs of the cv as images [Matthias]
 
@@ -59,7 +59,7 @@ print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzei
 
 # more text to explain the findings of the NN. What does the numbers mean? [Vy, Adriana]
 
-# check the spelling of crossvalidation, cross validation, cross-validation, should be just one version
+# check the spelling of crossvalidation, cross validation, cross-validation, should be just one version --> finished
 
 
 ## results 
@@ -77,7 +77,7 @@ print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzei
 
 
 
-```{r import_libs, include=TRUE, echo=FALSE}
+```{r import_libs, include=FALSE, echo=FALSE}
 #install.packages("installr")
 #library("installr")
 #install.Rtools()
@@ -127,18 +127,10 @@ The authors collected 1,142 pieces of music from a personal CD-collection. The t
 
 The attributes to describe the music pieces are automatically created by a software called MARSYAS[@tzanetakis2007marsyas], a software created to extract audio features from wave files. With MARSYAS the authors could convert every music peace to a set of 116 features called 'chromatic features'. The features are numerical and the authors claim to have normalized them into a gaussian normal distribution.
 
-Selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output, coordinates.
+The selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output, coordinates.
 
-In order to deal with our spatial output data we'd created a function to scale from our predicted and real values for further model evaluation.
+In order to deal with our spatial output data we created a function to scale from our predicted and real values for further model evaluation.
 
-```{r functions, include=TRUE}
-distances <- function(predicted, actual_value) {
-  dif <- predicted-actual_value
-  dif <- dif * (40030/360) # scaling coordinates to km by the factor circumference (km) / 360°
-  mse <- sqrt(dif[,1]^2 + dif[,2]^2)
-  return(mse)
-}
-```
 
 ```{r import_files, include=TRUE, echo=FALSE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
@@ -154,7 +146,7 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 
 ```
 
-# some insights into the data
+## some insights into the data
 
 ```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold", echo=FALSE}
 # check if data is already standardized
@@ -189,7 +181,7 @@ mp <- ggplot() + mapWorld
 mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
 ```
 
-# Conspicuousness
+## Conspicuousness
 When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returns 33 data points. The following code investigates this difference.
 
 ```{r insights_the_region_conspiracy, include=TRUE}
@@ -208,10 +200,6 @@ sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tra
 
 The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some row are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
 
-```{r insights_draw_worldmap, include=TRUE, echo=FALSE}
-plot(data$Longitude, data$Latitude, xlim=c(-180, 180), ylim=c(-90, 90))
-```
-
 
 ```{r insights_3, include=TRUE, echo=FALSE}
 df_lat <- data.frame(value = data$Latitude, dimension = "Latitude")
@@ -220,6 +208,10 @@ boxplot_df <- rbind(df_lat, df_long)
 
 boxplot(value~dimension, data=boxplot_df)
 ```
+
+## Data preparation
+
+The data is divided into a training set (80%) and into a test set (20%). A separate validation set was not defined as cross-validation was used or the validation was done directly within the algorithm.
 
 ```{r split_into_test_and_train, include=TRUE}
 set.seed(1)
@@ -231,10 +223,21 @@ test <- (1:n)[-train]
 
 
 # Method
-Short summary about the algorithms. Which are used? What do we do? Classification or Regression?
 
 We treat the problem of predicting the geographical origin of music as a regression problem since we want to predict the spherical coordinates (longitude and latitude).
 In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric: The geographical distance from the true position.
+
+```{r functions, include=TRUE}
+distances <- function(predicted, actual_value) {
+  dif <- predicted-actual_value
+  dif <- dif * (40030/360) # scaling coordinates to km by the factor circumference (km) / 360°
+  mse <- sqrt(dif[,1]^2 + dif[,2]^2)
+  return(mse)
+}
+```
+We wrote an overall function that calculates the distance between the predicted location of origin and the actual origin. The euclidean distance is used as a metrics. In fact, the algorithm is quite close to the calculation of the mean squared error for two dimensions. But it also converts the sphere coordinates into distances in [km]. This allows an easy interpretation of the results as well as a comparison with the results from the literature.
+
+To analyze the data we first took a baseline using a linear regression model before we applied two algorithms: Ridge regression and neural networks
 
 ## Baseline - Linear Regression
 
@@ -256,8 +259,8 @@ The impact of the variables was analysed. It seemed that not all of them have a 
 
 
 ```{r linear_regression_significant_variables, include=TRUE}
-model.lm.sig <- lm(cbind(Longitude, Latitude)~ V4+V9+V16+V30+V32+V33+V37+V38+V61+V90+V91+V92+V95+V96
-                   +V104+V5+V6+V8+V9+V11+V15+V34+V39+V63+V94+V97, 
+model.lm.sig <- lm(cbind(Longitude, Latitude)~ V4+V9+V16+V30+V32+V33+V37+V38+V61+V90+V91
+                   +V92+V95+V96+V104+V5+V6+V8+V9+V11+V15+V34+V39+V63+V94+V97, 
                    data=data[train,])
 pred.sig <- predict(model.lm.sig, newdata=data[test,])
 ```
@@ -334,24 +337,48 @@ pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
 
 
 pred_ridge_regression <- cbind(pred1, pred2)
+pred_ridge_regression
 mean(distances(pred_ridge_regression, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
-There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross validation. This process was done in a separate file as it took more than an hour to get a good value for 
+There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross-validation. (This process was done in a separate file as it took more than an hour to get a good value for. But the processed code is shown below):
+
+```{r ridge_cv_code, include=TRUE, echo=TRUE, eval=FALSE}
+# cross validation function similiar to the CV lesson in ML 1
+cross.validation <- function(grid) {
+  cv.err <- rep(NA, length(grid))
+  tic("Cross-Validation")
+  for (k in 1:length(grid)) {
+    
+    cv.loo <- rep(NA, n)
+    
+    for (i in 1:n) {
+      # defining data as LOOCV
+      loo.x <- x.train[-i,]
+      loo.y <- y.train[-i,]
+      # do multivariate regression model
+      loo.fit <- glmnet(loo.x, loo.y, family = "mgaussian", alpha=0, lambda=grid[k])
+      pred.y <- predict(loo.fit, s=grid[k], newx=t(as.matrix(x.train[i,])))
+      cv.loo[i] <- distances(pred.y, y.train[i,])
+    }
+    cv.err[k] <- mean(cv.loo)
+  }
+  toc()
+  return (cv.err)
+}
+```
+
+With the so found best lambda the multivariate model was developed. The best lambda is:
+
+```{r best_lambda, include=TRUE, echo=FALSE}
+bestlambda <- 0.007
+```
 
 ```{r ridge_multivariate_model, include=TRUE, echo=FALSE}
-ridge.mod.multivar <- glmnet(x[train,], y[train,], family = "mgaussian", alpha=0, lambda=0.070)
-pred.multivar <- predict(ridge.mod.multivar, s = 0.07, newx=x[test,])
-mean(distances(pred.multivar, data[test, c("Latitude","Longitude")])) ## final result in km
-
-#coef(ridge.mod.multivar)
-
-ridge.mod.mv.thresh <- glmnet(x[train,], y[train,], family = "mgaussian", alpha=0, lambda=0.70, thresh = 0.03)
-pred.mv.thresh <- predict(ridge.mod.mv.thresh, s = 0.7, newx=x[test,])
-mean(distances(pred.mv.thresh, data[test, c("Latitude","Longitude")])) ## final result in km
-
-#coef(ridge.mod.mv.thresh)
-
+ridge.mod.multivar <- glmnet(x[train,], y[train,], family = "mgaussian", alpha=0, lambda=bestlambda)
+pred_ridge_regression <- predict(ridge.mod.multivar, s = bestlambda, newx=x[test,])
+pred_ridge_regression <- pred_ridge_regression[,,1]
+mean(distances(pred_ridge_regression, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
 
