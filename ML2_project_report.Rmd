@@ -264,13 +264,11 @@ boxplot(c(distances(pred.sig, data[test, c("Latitude","Longitude")]), distances(
 
 ## Algorithm 1 - Ridge Regression
 
-Short introduction of the first algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
-
-The first algorithm we tried was ridge regression. This algorithm is similar to a linear regression but while the linear regression tries to minimize the difference between the weighted input variables and the output data, the ridge regression adds a regularisation term on the input variables. 
+The first algorithm we tried was ridge regression. This algorithm is similar to a linear regression but as the linear regression tries to minimize the difference between the weighted input variables and the output data, the ridge regression adds a regularisation term to the input variables. 
 
 $$RSS + \lambda \sum_{j=1} ^{p} { \hat{ \beta _j}  } ^2 = \sum_{i=1} ^n (y_i - \hat { \beta_0 } - \sum_{j=1} ^p { \hat  {\beta_j}x_ij})^2 + \lambda \sum_{j=1} ^{p} { \hat{ \beta }  } ^2_j$$
 
-In fact, this is a possibility to fight over-fitting. If lambda is big the model tends to just take the b0 into account. So the predicted value is the mean of the output variable. If lambda is small, then the model tends to be normal non-regularised model, hence the one from the linear regression. 
+In fact, this is a possibility to fight over-fitting. If lambda is big the model tends to just take the b0 into account. So the predicted value is the mean of the output variable. If lambda is small, then the model tends to be a normal non-regularised model, hence the one from the linear regression. 
 
 The command glmnet is used to perform the ridge regression. Cross-validation is performed to find the optimal lambda values. In general, it would be possible with glmnet to just calculate one single model for both output variables. But unfortunately, this option is not available when doing the cross-validation. So, again two independent cross-validations are done to get two values for lambda, one for each output variable.
 
@@ -307,7 +305,7 @@ pred <- cbind(pred1, pred2)
 mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
-There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross-validation. (This process was done in a separate file as it took more than an hour to get a good value for lambda. But the processed code is shown below):
+There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross-validation. Unfortunately, there is no built-in-function to perform the cross-validation in combination with glmnet as it was done with just one single output. So the cross-validation was written by hand. As it is not very optimized it takes over an hour to get a good value for lambda. So, that this process was done in a separate file. But the processed code is shown below:
 
 ```{r ridge_cv_code, include=TRUE, echo=TRUE, eval=FALSE}
 # cross validation function similiar to the CV lesson in ML 1
