@@ -3,7 +3,7 @@ title: "Machine learning II"
 subtitle: "Predicting the Geographical Origin of Music"
 author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
 date: "11.01.2022"
-bibliography: bibliography.bib
+#bibliography: bibliography.bib
 output:
   pdf_document: 
     toc: true
@@ -16,16 +16,48 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# notes
-```{r todos, include=TRUE}
+```{r todos_for_Adriana, include=FALSE, echo=FALSE}
+### TODO for Adriana
+  
+# remove description text for sections (NN, Ridge Regression, Method, Data Set, Introduction) [Adriana]
+# add more text to the results part (describing the graphs) compare values
+# add more text to the discussion part
+# write the conclusion
+
+```
+
+```{r todos_for_Vy, include=FALSE, echo=FALSE}
+### TODO for Vy
+
+# more text to explain the findings of the NN. What does the numbers mean? [Vy]
+```
+
+```{r todos_for_Stefan, include=FALSE, echo=FALSE}
+### TODO for Stefan
+
+# add a small text to the standardizsation of the data [Stefan]
+# "conspicuousness" --> new name and maybe the graph after the image of the map [Stefan]
+# text for the boxplot of latitude and longitude [Stefan]
+#replace normal plots in ggplot
+#add + theme_bw() to each ggplot
 print("scatter plot für koordinaten und box plot für varianz in long und lat") # why did we want this? its in the project, but the scatter plot is basically just the map without the cool parts 
 print("boxplot für distances für jedes modell -> um diese vergleichen zu können")
 print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzeigt und mit linien verbindet")
 ```
 
-# librarys
+```{r todos_for_matthias, include=TRUE, echo=FALSE}
+### TODO for Matthias
 
-```{r import_libs, include=TRUE}
+
+# have a look at the weights of the ridge regression and make a simplified model with less variables [Matthias]
+# test other model combinations for the NN to improve it. 
+# add boxplots to results with all distances
+# investigate on angles
+```
+
+
+
+```{r import_libs, include=FALSE, echo=FALSE}
 #install.packages("installr")
 #library("installr")
 #install.Rtools()
@@ -35,9 +67,10 @@ print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzei
 #install.packages("maps")
 #install.packages("glmnet")
 #install.packages("ISLR")
-#TODO the one below necessary?
 #install.packages("rgl")
 #install.packages("dplyr")
+#install.packages("keras")
+#install.packages("tensorflow")
 
 library("glmnet")
 library("ggplot2")
@@ -73,20 +106,12 @@ The authors collected 1,142 pieces of music from a personal CD-collection. The t
 
 The attributes to describe the music pieces are automatically created by a software called MARSYAS[@tzanetakis2007marsyas], a software created to extract audio features from wave files. With MARSYAS the authors could convert every music peace to a set of 116 features called 'chromatic features'. The features are numerical and the authors claim to have normalized them into a gaussian normal distribution.
 
-Selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output, coordinates.
+The selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output, coordinates.
 
-In order to deal with our spatial output data we'd created a function to scale from our predicted and real values for further model evaluation.
+In order to deal with our spatial output data we created a function to scale from our predicted and real values for further model evaluation.
 
-```{r functions, include=TRUE}
-distances <- function(predicted, actual_value) {
-  dif <- predicted-actual_value
-  dif <- dif * (40030/360) # scaling coordinates to km by the factor circumference (km) / 360°
-  mse <- sqrt(dif[,1]^2 + dif[,2]^2)
-  return(mse)
-}
-```
 
-```{r import_files, include=TRUE}
+```{r import_files, include=TRUE, echo=FALSE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
 data <- as.data.frame(data)
 colnames(data)[117:118] <- c("Latitude", "Longitude")
@@ -98,23 +123,11 @@ anyNA(data) # testing if there is at least a single NA -> but in this dataset th
 # Maybe some more pre-processing could be done here.
 anyDuplicated(data) # testing for duplicates -> 0 found
 
-# feature scaling
-
-# separate labels from features
-#label_column_names <- c("Longitude", "Latitude")
-#data_labels <- data[label_column_names]
-#data_features <- subset(data, select = -label_column_names)
-# scale features
-#data_features_scaled <- as.data.frame(scale(data_features))
-# add labels to the now scaled features
-#data <- cbind(data_features_scaled, data_labels)
-
-
 ```
 
-# some insights into the data
+## some insights into the data
 
-```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold"}
+```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold", echo=FALSE}
 # check if data is already standardized
 
 # get columns without the target cols ("long" and "lat")
@@ -139,7 +152,7 @@ abline(h=0, col = "blue", lty=5)
 ```
 
 
-```{r insights_create_worldmap, include=TRUE}
+```{r insights_create_worldmap, include=TRUE, echo=FALSE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
@@ -147,7 +160,7 @@ mp <- ggplot() + mapWorld
 mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
 ```
 
-# Conspicuousness
+## Conspicuousness
 When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returns 33 data points. The following code investigates this difference.
 
 ```{r insights_the_region_conspiracy, include=TRUE}
@@ -166,18 +179,18 @@ sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tra
 
 The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some row are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
 
-```{r insights_draw_worldmap, include=TRUE}
-plot(data$Longitude, data$Latitude, xlim=c(-180, 180), ylim=c(-90, 90))
-```
 
-
-```{r insights_3, include=TRUE}
+```{r insights_3, include=TRUE, echo=FALSE}
 df_lat <- data.frame(value = data$Latitude, dimension = "Latitude")
 df_long <- data.frame(value = data$Longitude, dimension = "Longitude")
 boxplot_df <- rbind(df_lat, df_long)
 
 boxplot(value~dimension, data=boxplot_df)
 ```
+
+## Data preparation
+
+The data is divided into a training set (80%) and into a test set (20%). A separate validation set was not defined as cross-validation was used or the validation was done directly within the algorithm.
 
 ```{r split_into_test_and_train, include=TRUE}
 set.seed(1)
@@ -189,10 +202,21 @@ test <- (1:n)[-train]
 
 
 # Method
-Short summary about the algorithms. Which are used? What do we do? Classification or Regression?
 
 We treat the problem of predicting the geographical origin of music as a regression problem since we want to predict the spherical coordinates (longitude and latitude).
 In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric: The geographical distance from the true position.
+
+```{r functions, include=TRUE}
+distances <- function(predicted, actual_value) {
+  dif <- predicted-actual_value
+  dif <- dif * (40030/360) # scaling coordinates to km by the factor circumference (km) / 360°
+  mse <- sqrt(dif[,1]^2 + dif[,2]^2)
+  return(mse)
+}
+```
+We wrote an overall function that calculates the distance between the predicted location of origin and the actual origin. The euclidean distance is used as a metrics. In fact, the algorithm is quite close to the calculation of the mean squared error for two dimensions. But it also converts the sphere coordinates into distances in [km]. This allows an easy interpretation of the results as well as a comparison with the results from the literature.
+
+To analyze the data we first took a baseline using a linear regression model before we applied two algorithms: Ridge regression and neural networks
 
 ## Baseline - Linear Regression
 
@@ -214,8 +238,8 @@ The impact of the variables was analysed. It seemed that not all of them have a 
 
 
 ```{r linear_regression_significant_variables, include=TRUE}
-model.lm.sig <- lm(cbind(Longitude, Latitude)~ V4+V9+V16+V30+V32+V33+V37+V38+V61+V90+V91+V92+V95+V96
-                   +V104+V5+V6+V8+V9+V11+V15+V34+V39+V63+V94+V97, 
+model.lm.sig <- lm(cbind(Longitude, Latitude)~ V4+V9+V16+V30+V32+V33+V37+V38+V61+V90+V91
+                   +V92+V95+V96+V104+V5+V6+V8+V9+V11+V15+V34+V39+V63+V94+V97, 
                    data=data[train,])
 pred.sig <- predict(model.lm.sig, newdata=data[test,])
 ```
@@ -226,7 +250,7 @@ mean(distances(pred.sig, data[test, c("Latitude","Longitude")])) ## final result
 ```
 
 An ANOVA was calculated to check if there is a significant difference between the two models. 
-```{r linear_regression_anova, include=TRUE}
+```{r linear_regression_anova, include=TRUE, echo=FALSE}
 anova(model.lm.all, model.lm.sig)
 ```
 
@@ -240,30 +264,35 @@ boxplot(c(distances(pred.sig, data[test, c("Latitude","Longitude")]), distances(
 
 ## Algorithm 1 - Ridge Regression
 
-Short introduction of the first algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
+The first algorithm we tried was ridge regression. This algorithm is similar to a linear regression but as the linear regression tries to minimize the difference between the weighted input variables and the output data, the ridge regression adds a regularisation term to the input variables. 
 
-The first algorithm we tried was ridge regression. This algorithm is similar to a linear regression but while the linear regression tries to minimize the difference between the weighted input variables and the output data, the ridge regression adds a regularisation term on the input variables. 
+$$RSS + \lambda \sum_{j=1} ^{p} { \hat{ \beta _j}  } ^2 = \sum_{i=1} ^n (y_i - \hat { \beta_0 } - \sum_{j=1} ^p { \hat  {\beta_j}x_ij})^2 + \lambda \sum_{j=1} ^{p} { \hat{ \beta }  } ^2_j$$
 
-$ RSS + \lambda \sum_{j=1} ^{p} { \hat{ \beta _j}  } ^2 = \sum_{i=1} ^n (y_i - \hat { \beta_0 } - \sum_{j=1} ^p { \hat  {\beta_j} x_ij})^2 + \lambda \sum_{j=1} ^{p} { \hat{ \beta }  } ^2_j $
-
-In fact, this is a possibility to fight over-fitting. If lambda is big the model tends to just take the b0 into account. So the predicted value is the mean of the output variable. If lambda is small, then the model tends to be normal non-regularised model, hence the one from the linear regression. 
+In fact, this is a possibility to fight over-fitting. If lambda is big the model tends to just take the b0 into account. So the predicted value is the mean of the output variable. If lambda is small, then the model tends to be a normal non-regularised model, hence the one from the linear regression. 
 
 The command glmnet is used to perform the ridge regression. Cross-validation is performed to find the optimal lambda values. In general, it would be possible with glmnet to just calculate one single model for both output variables. But unfortunately, this option is not available when doing the cross-validation. So, again two independent cross-validations are done to get two values for lambda, one for each output variable.
 
 ```{r ridge_data_preparation, include=TRUE, echo=FALSE}
 x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
-y <- data[, c("Latitude","Longitude")]
+y <- data[, c("Latitude", "Longitude")]
 ```
 
 ```{r ridge_data_cv, include=TRUE, echo=FALSE}
 ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
-plot(ridge.mod.1) # TODO: Here has to be GGPLOT used
+
+ridge.mod.1.plot <- cbind.data.frame(exp(ridge.mod.1$lambda), ridge.mod.1$cvm)
+ggplot() + geom_point(data=ridge.mod.1.plot, aes(x=log10(ridge.mod.1$lambda), y=ridge.mod.1$cvm), color="red") + theme_bw() + labs(y="MSE", x = (expression(Log[10] (lambda)))) 
+
 bestlam1 <- ridge.mod.1$lambda.min
 
 ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
-plot(ridge.mod.2) # TODO: Here has to be GGPLOT used
+
+ridge.mod.2.plot <- cbind.data.frame(exp(ridge.mod.2$lambda), ridge.mod.2$cvm)
+ggplot() + geom_point(data=ridge.mod.2.plot, aes(x=log10(ridge.mod.2$lambda), y=ridge.mod.2$cvm), color="red") + theme_bw() + labs(y="MSE", x = (expression(Log[10] (lambda)))) 
+
 bestlam2 <- ridge.mod.2$lambda.min
 ```
+
 It can be seen that the distributions for lambda are quite similar for both models. Although the MSE for both models differ the optimal lambda is quite similar:
 
 ```{r ridge_best_lambda, include=TRUE, echo=FALSE}
@@ -281,69 +310,64 @@ pred <- cbind(pred1, pred2)
 mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
-A second result is calculated with just one lambda. This lambda is calculated as the mean of the before calculated values of lambda. The result for the adapted version is just slightly worse than with the model with two independent lambdas:
+There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross-validation. Unfortunately, there is no built-in-function to perform the cross-validation in combination with glmnet as it was done with just one single output. So the cross-validation was written by hand. As it is not very optimized it takes over an hour to get a good value for lambda. So, that this process was done in a separate file. But the processed code is shown below:
 
-```{r ridge_data_mean_lambda, include=TRUE, echo=FALSE}
-pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
-pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
+```{r ridge_cv_code, include=TRUE, echo=TRUE, eval=FALSE}
+# cross validation function similiar to the CV lesson in ML 1
+cross.validation <- function(grid) {
+  cv.err <- rep(NA, length(grid))
+  tic("Cross-Validation")
+  for (k in 1:length(grid)) {
+    
+    cv.loo <- rep(NA, n)
+    
+    for (i in 1:n) {
+      # defining data as LOOCV
+      loo.x <- x.train[-i,]
+      loo.y <- y.train[-i,]
+      # do multivariate regression model
+      loo.fit <- glmnet(loo.x, loo.y, family = "mgaussian", alpha=0, lambda=grid[k])
+      pred.y <- predict(loo.fit, s=grid[k], newx=t(as.matrix(x.train[i,])))
+      cv.loo[i] <- distances(pred.y, y.train[i,])
+    }
+    cv.err[k] <- mean(cv.loo)
+  }
+  toc()
+  return (cv.err)
+}
+```
+
+With the so found best lambda the multivariate model was developed. The best lambda is:
 
 
-pred <- cbind(pred1, pred2)
-mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
+```{r best_lambda, include=TRUE, echo=FALSE}
+load("cv.RData")
+
+bestlambda <- cv.fine[which(cv.fine[,2] == min(cv.fine[,2]))]
+bestlambda
+```
+
+This results to this mean prediction error [km] for the test data:
+
+```{r ridge_multivariate_model, include=TRUE, echo=FALSE}
+ridge.mod.multivar <- glmnet(x[train,], y[train,], family = "mgaussian", alpha=0, lambda=bestlambda)
+pred_ridge_regression <- predict(ridge.mod.multivar, s = bestlambda, newx=x[test,])
+pred_ridge_regression <- pred_ridge_regression[,,1]
+mean(distances(pred_ridge_regression, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
 
-```{r Matthias_playground_ridge, include=FALSE}
-grid <- 10^seq(10, -2, length=100)
-x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
-y <- data[, c("Latitude","Longitude")]
-#set.seed(100)
 
+Also the grid search for the best lambda is shown below. Two searches were done. A rough one to find the interval to search in with a finer cross-validation:
 
-## This is code for the evaluation how lambda for the models differ depending on the output variable (Latitude vs. Longitude)
-
-#outputs <- matrix(nrow=100, ncol=2)
-#for (r in 1:100) {
-#  out1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
-#  #plot(out1)
-#  bestlam <- out1$lambda.min
-#  outputs[r,1] <- bestlam
-#  out2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
-#  #plot(out2)
-#  bestlam <- out2$lambda.min
-#  outputs[r,2] <- bestlam
-#}
-
-#xx <- outputs[,1]
-#yy <- outputs[,2]
-#t.test(xx,yy)
-#boxplot(outputs)
-
-# Ridge regression with cross-validation depending on tw separate models
-ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
-plot(ridge.mod.1)
-bestlam1 <- ridge.mod.1$lambda.min
-
-ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
-plot(ridge.mod.2)
-bestlam2 <- ridge.mod.2$lambda.min
-
-# predictions for two separate models
-pred1 <- predict(ridge.mod.1, s=bestlam1, newx=x[test,])
-pred2 <- predict(ridge.mod.2, s=bestlam2, newx=x[test,])
-
-pred <- cbind(pred1, pred2)
-mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
-
-# predictions for a model using just one lambda (mean)
-pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
-pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
-
-
-pred <- cbind(pred1, pred2)
-mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
-
+```{r show_cv, include=TRUE, echo=FALSE}
+cv.rough <- as.data.frame(cv.rough)
+ggplot() + geom_point(data = cv.rough, aes(x = log10(grid.rough), y = cv.err.rough), color = "blue") + theme_bw()  + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
+cv.fine <- as.data.frame(cv.fine)
+ggplot() + geom_point(data = cv.fine, aes(x = log10(grid.fine), y = cv.err.fine), color = "red") + theme_bw() + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
 ```
+
+
 
 
 ## Algorithm 2 - Artificial Neural Networks (NNs)
@@ -411,7 +435,6 @@ mean((y_train - y_preds_train)^2)
 
 # Customized distance metric
 mean(distances(y_train, y_preds_train)) 
-
 ```
 
 For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and use the MSE as well as the custom distance metric. We get the following results:
@@ -420,17 +443,63 @@ For evaluation we predict the Longitude and Latitude for the same test data as f
 ### Test data ###
 
 # Predict the Latitude for the test data
-y_pred <- model %>% predict(X_test)
+y_pred_neural_net <- model %>% predict(X_test)
 
 # Evaluate with MSE
-mean((y_test - y_pred)^2)
+mean((y_test - y_pred_neural_net)^2)
 
 # Evaluate on test data and labels with customized distance metric
-mean(distances(y_test, y_pred))                   # 4122.794
+mean(distances(y_test, y_pred_neural_net))                   # 4122.794
 ```
 
-
 # Results
+
+```{r final_map_for_comparison, include=TRUE, echo=FALSE}
+# y[test,]
+target_values <- data.frame (Latitude = y[test,1],
+                             Longitude = y[test,2])
+
+target_values$index <- 1:nrow(target_values)
+target_values$source <- "Original"
+
+# y_pred_neural_net
+neural_net_results <- data.frame (Latitude = y_pred_neural_net[,1],
+                                  Longitude = y_pred_neural_net[,2])
+neural_net_results$index <- 1:nrow(neural_net_results)
+neural_net_results$source <- "NeuralNet"
+
+# pred_ridge_regression
+ridge_regression_results <- data.frame (Latitude = pred_ridge_regression[,1],
+                                        Longitude = pred_ridge_regression[,2])
+ridge_regression_results$index <- 1:nrow(ridge_regression_results)
+ridge_regression_results$source <- "RidgeRegression"
+
+
+dim(target_values)
+dim(neural_net_results)
+dim(ridge_regression_results)
+
+aggregated_results_ridge_regression <- rbind(target_values, ridge_regression_results)
+aggregated_results_neural_net <- rbind(target_values, neural_net_results)
+
+
+
+nrow(aggregated_results_neural_net) # there are 1271 rows in each df
+
+# because there are so many rows in each df we selct only 10% for the visualization
+aggregated_results_ridge_regression_10_percent = aggregated_results_ridge_regression[aggregated_results_ridge_regression$index %% 10 == 0,]
+
+aggregated_results_neural_net_10_percent = aggregated_results_neural_net[aggregated_results_neural_net$index %% 10 == 0,]
+
+mapWorld <- borders("world", colour="gray50", fill="white")
+mp <- ggplot() + mapWorld +
+  geom_point(size = 1, data = aggregated_results_ridge_regression_10_percent, aes(Longitude, Latitude, group=index, color=source)) +
+  geom_line(data = aggregated_results_ridge_regression_10_percent, aes(Longitude, Latitude, group=index, color="RidgeRegression")) +
+  geom_point(size = 1, data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color=source)) +
+  geom_line(data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color="NeuralNet"))
+mp
+```
+
 Here some tables, summaries or especially graphs should be shown here. Maybe this section should be separated into two to show the algorithms for themselves
 
 We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. First, in our implementation of ridge regression we are fitting two separate models in order to get the two desired output variables. Nevertheless, we know that latitude and longitude are correlated variables, fact that ridge regression doesn't take into account so we expected a bigger error than NN. In the contrary, above implementation of neural network is predicting two variables at once like examples given in paper. 
