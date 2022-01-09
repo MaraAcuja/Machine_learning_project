@@ -48,11 +48,8 @@ print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzei
 ```{r todos_for_matthias, include=TRUE, echo=FALSE}
 ### TODO for Matthias
 
-
 # have a look at the weights of the ridge regression and make a simplified model with less variables [Matthias]
 # test other model combinations for the NN to improve it. 
-# add boxplots to results with all distances
-# investigate on angles
 ```
 
 
@@ -231,7 +228,8 @@ To calculate a good meaningful measurement for the goodness of fit for the predi
 
 The predictions are on average quite far from the true destination:
 ```{r linear_regression_all_variables_result, include=TRUE, echo=FALSE}
-mean(distances(pred.all, data[test, c("Latitude","Longitude")])) ## final result in km
+distances_baseline <- distances(pred.all, data[test, c("Latitude","Longitude")])
+mean(distances_baseline) ## final result in km
 ```
 
 The impact of the variables was analysed. It seemed that not all of them have a significant influence on the models. So a second model was developed, just using the variable which have a significant influence on the full model, either on the Latitude or on the Longitude. 
@@ -353,7 +351,8 @@ This results to this mean prediction error [km] for the test data:
 ridge.mod.multivar <- glmnet(x[train,], y[train,], family = "mgaussian", alpha=0, lambda=bestlambda)
 pred_ridge_regression <- predict(ridge.mod.multivar, s = bestlambda, newx=x[test,])
 pred_ridge_regression <- pred_ridge_regression[,,1]
-mean(distances(pred_ridge_regression, data[test, c("Latitude","Longitude")])) ## final result in km
+distances_ridge_regression <- distances(pred_ridge_regression, data[test, c("Latitude","Longitude")])
+mean(distances_ridge_regression) ## final result in km
 ```
 
 
@@ -382,6 +381,7 @@ The NN takes all features from the training data and outputs two values for the 
 The results are visualized below.
 
 ```{r neural_network, include=TRUE, echo=FALSE}
+set.seed(1)
 X_train<-as.matrix(x[train,])
 y_train<-as.matrix(y[train,])
 X_test<-as.matrix(x[test,])
@@ -441,7 +441,7 @@ For evaluation we predict the Longitude and Latitude for the same test data as f
 
 ```{r NN_distance_metric, include=TRUE, echo=FALSE}
 ### Test data ###
-
+set.seed(1)
 # Predict the Latitude for the test data
 y_pred_neural_net <- model %>% predict(X_test)
 
@@ -449,10 +449,33 @@ y_pred_neural_net <- model %>% predict(X_test)
 mean((y_test - y_pred_neural_net)^2)
 
 # Evaluate on test data and labels with customized distance metric
-mean(distances(y_test, y_pred_neural_net))                   # 4122.794
+distances_NN <- distances(y_test, y_pred_neural_net)
+mean(distances_NN)                   # 4122.794
 ```
 
 # Results
+
+Here some tables, summaries or especially graphs should be shown here. Maybe this section should be separated into two to show the algorithms for themselves
+
+We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. First, in our implementation of ridge regression we are fitting two separate models in order to get the two desired output variables. Nevertheless, we know that latitude and longitude are correlated variables, fact that ridge regression doesn't take into account so we expected a bigger error than NN. In the contrary, above implementation of neural network is predicting two variables at once like examples given in paper. 
+
+```{r comparisons_of_distributions, include=TRUE, echo=FALSE}
+distances_all <- cbind.data.frame(distances_baseline, distances_ridge_regression, distances_NN)
+names(distances_all)[names(distances_all) == "distances_baseline"] <- "Baseline"
+names(distances_all)[names(distances_all) == "distances_ridge_regression"] <- "Ridge Regression"
+names(distances_all)[names(distances_all) == "distances_NN"] <- "NN"
+
+ggplot() + theme_bw() + 
+  geom_boxplot(data=stack(distances_all), aes(y=values, x=ind), fill = c("grey", "blue", "orange"), outlier.color="red") + labs (y = "Distances [km]", x ="Method")
+
+```
+
+In the boxplot above the distributions of the baseline and the two other algorithms are displyed next to each other. It is clearly to see that the baseline is worse than the two performed algorithms. Not just the median of the baseline is higher than the other two medians but especially the 75%-Quantile is much higher than the ones from the Ridge Regression and the NN. 
+
+A comparisons of the two performed algorithms is a bit more difficult. THe median is quite similar and as the box of the ridge regression is smaller the distribution is a bit more dense compared to the NN. But this algorithm doesn't seem to be better or worse compared to the NN.
+
+Further investigations have to be done by displaying the predictions on a map and linking them to the true origins of the music:
+
 
 ```{r final_map_for_comparison, include=TRUE, echo=FALSE}
 # y[test,]
@@ -475,16 +498,16 @@ ridge_regression_results$index <- 1:nrow(ridge_regression_results)
 ridge_regression_results$source <- "RidgeRegression"
 
 
-dim(target_values)
-dim(neural_net_results)
-dim(ridge_regression_results)
+#dim(target_values)
+#dim(neural_net_results)
+#dim(ridge_regression_results)
 
 aggregated_results_ridge_regression <- rbind(target_values, ridge_regression_results)
 aggregated_results_neural_net <- rbind(target_values, neural_net_results)
 
 
 
-nrow(aggregated_results_neural_net) # there are 1271 rows in each df
+#nrow(aggregated_results_neural_net) # there are 1271 rows in each df
 
 # because there are so many rows in each df we selct only 10% for the visualization
 aggregated_results_ridge_regression_10_percent = aggregated_results_ridge_regression[aggregated_results_ridge_regression$index %% 10 == 0,]
@@ -500,9 +523,32 @@ mp <- ggplot() + mapWorld +
 mp
 ```
 
-Here some tables, summaries or especially graphs should be shown here. Maybe this section should be separated into two to show the algorithms for themselves
+```{r investigations_on_angles, include=TRUE}
 
-We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. First, in our implementation of ridge regression we are fitting two separate models in order to get the two desired output variables. Nevertheless, we know that latitude and longitude are correlated variables, fact that ridge regression doesn't take into account so we expected a bigger error than NN. In the contrary, above implementation of neural network is predicting two variables at once like examples given in paper. 
+angle <- function(x,y){
+  dot.prod <- x%*%y 
+  norm.x <- norm(x,type="2")
+  norm.y <- norm(y,type="2")
+  theta <- acos(dot.prod / (norm.x * norm.y))
+  alpha <- (as.numeric(theta))
+  if (alpha > pi/2) {
+    return(pi-alpha)
+  } else {
+    return(alpha)
+  }
+}
+
+vectors.RR <- as.matrix(pred_ridge_regression - y[test,])
+vectors.NN <- as.matrix(y_pred_neural_net - y[test,])
+angles <- rep(NA, dim(vectors.RR)[1])
+for (i in 1:dim(vectors.RR)[1]) {
+  angles[i] <- angle(vectors.RR[i,], vectors.NN[i,])
+}
+
+ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), outlier.color = "red", fill="blue") + xlab("Angle")
+
+```
+
 
 # Discussion
  
