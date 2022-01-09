@@ -16,63 +16,43 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# notes
-```{r todos, include=TRUE}
+```{r todos_for_Adriana, include=FALSE, echo=FALSE}
+### TODO for Adriana
+  
+# remove description text for sections (NN, Ridge Regression, Method, Data Set, Introduction) [Adriana]
+# add more text to the results part (describing the graphs) compare values
+# add more text to the discussion part
+# write the conclusion
+
+```
+
+```{r todos_for_Vy, include=FALSE, echo=FALSE}
+### TODO for Vy
+
+# more text to explain the findings of the NN. What does the numbers mean? [Vy]
+```
+
+```{r todos_for_Stefan, include=FALSE, echo=FALSE}
+### TODO for Stefan
+
+# add a small text to the standardizsation of the data [Stefan]
+# "conspicuousness" --> new name and maybe the graph after the image of the map [Stefan]
+# text for the boxplot of latitude and longitude [Stefan]
+#replace normal plots in ggplot
+#add + theme_bw() to each ggplot
 print("scatter plot für koordinaten und box plot für varianz in long und lat") # why did we want this? its in the project, but the scatter plot is basically just the map without the cool parts 
 print("boxplot für distances für jedes modell -> um diese vergleichen zu können")
 print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzeigt und mit linien verbindet")
 ```
 
-```{r todos_from_matthias, include=TRUE}
+```{r todos_for_matthias, include=TRUE, echo=FALSE}
+### TODO for Matthias
+
 # remove the normal two model ridge regression and replace it by just the combined model (Should we or not?) [Matthias]
-
-# rename Vys code chunks --> finished
-
-# have a look at the weights of the ridge regression and make a simplified model with less 
-# variables
-
+# have a look at the weights of the ridge regression and make a simplified model with less variables [Matthias]
 # test other model combinations for the NN to improve it. 
-
-# add the algorithm to the ridge regression --> finsihed
-
-# add a description to the distance metric [Matthias] --> finished
-
-# add a small text to the standardizsation of the data [Stefan]
-
-# change order of insights in the data and the main metrics --> finished 
-
-# "conspicuousness" --> new name and maybe the graph after the image of the map
-
-# remove locations without map below [Stefan] --> finished
-
-# text for the boxplot of latitude and longitude [Stefan]
-
-# where should be the data preparation? maybe more up at the insights [Matthias] --> finished
-
-### baseline as combined model as well? [Matthias]
-
-# force anova output just on one page [Matthias] --> too complicated
-
-## include the graphs of the cv as images [Matthias]
-
-# remove description text for sections (NN, Ridge Regression, Method, Data Set, Introduction) [Adriana]
-
-# more text to explain the findings of the NN. What does the numbers mean? [Vy, Adriana]
-
-# check the spelling of crossvalidation, cross validation, cross-validation, should be just one version --> finished
-
-
-## results 
-# compare boxplots of measurements there
-# compare values completely
-
-
-## text for conclusion
-
-
-#replace normal plots in ggplot
-#add + theme_bw() to each ggplot
-
+# include the graphs of the cv as images [Matthias]
+# add boxplots to results with all distances
 ```
 
 
@@ -87,7 +67,6 @@ print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzei
 #install.packages("maps")
 #install.packages("glmnet")
 #install.packages("ISLR")
-#TODO the one below necessary?
 #install.packages("rgl")
 #install.packages("dplyr")
 #install.packages("keras")
@@ -328,20 +307,7 @@ pred <- cbind(pred1, pred2)
 mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
-A second result is calculated with just one lambda. This lambda is calculated as the mean of the before calculated values of lambda. The result for the adapted version is just slightly worse than with the model with two independent lambdas:
-
-```{r ridge_data_mean_lambda, include=TRUE, echo=FALSE}
-pred1 <- predict(ridge.mod.1, s=(bestlam1+bestlam2)/2, newx=x[test,])
-pred2 <- predict(ridge.mod.2, s=(bestlam1+bestlam2)/2, newx=x[test,])
-
-
-
-pred_ridge_regression <- cbind(pred1, pred2)
-pred_ridge_regression
-mean(distances(pred_ridge_regression, data[test, c("Latitude","Longitude")])) ## final result in km
-```
-
-There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross-validation. (This process was done in a separate file as it took more than an hour to get a good value for. But the processed code is shown below):
+There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross-validation. (This process was done in a separate file as it took more than an hour to get a good value for lambda. But the processed code is shown below):
 
 ```{r ridge_cv_code, include=TRUE, echo=TRUE, eval=FALSE}
 # cross validation function similiar to the CV lesson in ML 1
