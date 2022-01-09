@@ -210,7 +210,7 @@ The predictions are on average quite far from the true destination:
 mean(distances(pred.all, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
-The impact of the variables was analysed. It seemed that not all of them have a significant influence on the models. So a second model was developed, just using the variable which have a significiant influence on the full model, either on the Latitude or on the Longitude. 
+The impact of the variables was analysed. It seemed that not all of them have a significant influence on the models. So a second model was developed, just using the variable which have a significant influence on the full model, either on the Latitude or on the Longitude. 
 
 
 ```{r linear_regression_significant_variables, include=TRUE}
