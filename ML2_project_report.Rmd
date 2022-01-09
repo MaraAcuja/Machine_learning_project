@@ -1,15 +1,16 @@
 ---
 title: "Machine learning II"
-subtitle: "Predicting the Geographical Origin of Music"
 author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
 date: "11.01.2022"
-#bibliography: bibliography.bib
 output:
-  pdf_document: 
-    toc: true
-    toc_depth: 2
+  word_document:
+    toc: yes
+    toc_depth: '2'
   html_document: default
-  
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+subtitle: Predicting the Geographical Origin of Music
 ---
 
 ```{r setup, include=FALSE}
@@ -86,10 +87,7 @@ library(tensorflow)
 ```
 
 # Comparison of machine learning algorithms / Introduction / Theory
-
-This report attempts to compare two regression/classification algorithms on its behavior on a specific data set. What should be found out?
-
-Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found interesting trying to apply some machine learning algorithms: ridge regression and neural networks  and compare its results.  
+Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found interesting trying to apply some machine learning algorithms: ridge regression and neural networks and compare its results to determine the geographical origin of tracks based on different features.  
 
 # Data set
 Here should be a bit of a short summary of the data set with some key characteristics of the data set.
@@ -97,16 +95,13 @@ Here should be a bit of a short summary of the data set with some key characteri
 What is it about? Which variables are included? What type of variables?
 What is missing? What about missing values?
 
-The data used in this project is provided by the authors of the paper "Predicting the Geographical Origin of Music"[@Zhou2015 how crated and used this set as basis for this paper. The key information embedded in this data set are attributes of music pieces labeled by there point of origin.
+The data used in this project is provided by the authors of the paper "Predicting the Geographical Origin of Music"[@Zhou2015 who created and used this set as basis for this paper. The key information embedded in this data set are attributes of music pieces labeled by there point of origin.
 
 The authors collected 1,142 pieces of music from a personal CD-collection. The target values represented by longitude and latitude are the main country/area of residence of the artists that produced the music. Over all the authors collected music from 73 countries/areas not including western style music, since this category is called to have a global influence and therefor unfitted for predicting a specific country/region. 
 
 The attributes to describe the music pieces are automatically created by a software called MARSYAS[@tzanetakis2007marsyas], a software created to extract audio features from wave files. With MARSYAS the authors could convert every music peace to a set of 116 features called 'chromatic features'. The features are numerical and the authors claim to have normalized them into a gaussian normal distribution.
 
 The selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output, coordinates.
-
-In order to deal with our spatial output data we created a function to scale from our predicted and real values for further model evaluation.
-
 
 ```{r import_files, include=TRUE, echo=FALSE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
