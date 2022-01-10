@@ -553,11 +553,6 @@ ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), 
 
 
 # Discussion
-Here follows the discussion of the results. What are the major findings? How did the algorithms perform? Which one was better overall? Is it always better or were the findings which were better by the other one?
-Which one should be implemented? How could the algorithm be tweaked to perform even better?
-Where were the problems during implementation? Where are the limits for the algorithms?
-How precise do we predict the cities? How far is the difference in kilometers? The authors of the paper where the dataset comes from have a mean great circle error of 3113km? Are we above or below and by how much?
-
 As we introduced, predicting data points on the Earth using a latitude/longitude representation adds complexity to our problem because of the natural characteristics of coordinates. In first place longitude is discontinuous, meaning that the longitude of two points geographically near might be significantly different and secondly because coordinates are not linear. 
 
 We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better because the nature of selected data is not linear. For the first algorithm implementation, ridge regression had been used to fit two separate models in order to get the two desired output variables, this approach would assume that longitude and latitude are stochastically independent. For a better comparison, ridge regression had been fitted also as multivariate model. For both cases cross-validation had been used to determine de optimal lamdba. We would assume than given the relation between longitude and latitude second model would perform better, however by the results indicates that the assumptions is not valid, since MSE for tho implementations was very similar, 4492.287km and 4461.744 respectively. 
@@ -568,5 +563,5 @@ If we compare the two models applied by looking at MSE we know that NN performed
 
 
 # Conclusion
-At final some conclusions about the key findings and which algorithm should be used. What was the goal? Were and how were they achieved?
-If we compare the two models applied by looking at MSE we know that neural network performs better than ridge regression, as we assumed. However the difference is not big ___ km. Nevertheless, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km.
+In summary through this analysis we addressed the topic of predicting the geographical origin of some music tracks with to different regression algorithms. We were more familiar with ridge regression but wanted to try also NN. It would be ideal if we could improve the paper results of having an error between 3,100 and 3,600 kilometers but unfortunately that was achieved. We could conclude that for given data paper applied models: KNN and Random Forest Regression performed better. Further research on how to tackle geo-spacial output variables could be made to either implement another models more suitable or improve the NN even more, considering the size of the dataset adding more tracks to the analysis would for sure led to better results. Finally, would be also interesting to tackle the problem as classification and compare results with this analysis. 
+
