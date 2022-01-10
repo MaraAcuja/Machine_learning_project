@@ -272,7 +272,7 @@ anova(model.lm.all, model.lm.sig)
 The model tells that there is a difference and, as seen before, the smaller model performs better.
 
 
-```{r linear_regression_boxplot, echo=FALSE}
+```{r linear_regression_boxplot, echo=FALSE, fig.cap="MISSING CAPTION!!!!!!!!!!!!!"}
 # TODO:  in GGPLOT2
 small.model <- distances(pred.sig, data[test, c("Latitude","Longitude")])
 full.model <- distances(pred.all, data[test, c("Latitude","Longitude")])
@@ -301,7 +301,7 @@ x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
 y <- data[, c("Latitude", "Longitude")]
 ```
 
-```{r ridge_data_cv, include=TRUE, echo=FALSE}
+```{r ridge_data_cv, include=TRUE, echo=FALSE, fig.cap="MISSING CAPTION!!!!!!!!!!!!!}
 ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
 
 ridge.mod.1.plot <- cbind.data.frame(exp(ridge.mod.1$lambda), ridge.mod.1$cvm)
@@ -385,7 +385,7 @@ mean(distances_ridge_regression) ## final result in km
 
 Also the grid search for the best lambda is shown below. Two searches were done. A rough one to find the interval to search in with a finer cross-validation:
 
-```{r show_cv, include=TRUE, echo=FALSE, fig.cap="MSE"}
+```{r show_cv, include=TRUE, echo=FALSE, fig.cap="MSE", fig.cap="MISSING CAPTION!!!!!!!!!!!!!}
 cv.rough <- as.data.frame(cv.rough)
 ggplot() + geom_point(data = cv.rough, aes(x = log10(grid.rough), y = cv.err.rough), color = "blue") + theme_bw()  + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
 cv.fine <- as.data.frame(cv.fine)
