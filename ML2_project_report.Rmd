@@ -229,7 +229,7 @@ distances <- function(predicted, actual_value) {
   return(mse)
 }
 ```
-We wrote an overall function that calculates the distance between the predicted location of origin and the actual origin. The euclidean distance is used as a metrics. In fact, the algorithm is quite close to the calculation of the mean squared error for two dimensions. But it also converts the sphere coordinates into distances in [km]. This allows an easy interpretation of the results as well as a comparison with the results from the literature.
+We wrote an overall function that calculates the distance between the predicted location of origin and the actual origin. The euclidean distance is used as a metric. In fact, the algorithm is quite close to the calculation of the mean squared error for two dimensions. But it also converts the sphere coordinates into distances in [km]. This allows an easy interpretation of the results as well as a comparison with the results from the literature.
 
 To analyze the data we first took a baseline using a linear regression model before we applied two algorithms: Ridge regression and neural networks.
 
@@ -272,7 +272,7 @@ anova(model.lm.all, model.lm.sig)
 The model tells that there is a difference and, as seen before, the smaller model performs better.
 
 
-```{r linear_regression_boxplot, echo=FALSE, fig.cap="MISSING CAPTION!!!!!!!!!!!!!"}
+```{r linear_regression_boxplot, echo=FALSE, fig.cap="Comparison of error of baseline models"}
 # TODO:  in GGPLOT2
 small.model <- distances(pred.sig, data[test, c("Latitude","Longitude")])
 full.model <- distances(pred.all, data[test, c("Latitude","Longitude")])
@@ -301,7 +301,7 @@ x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
 y <- data[, c("Latitude", "Longitude")]
 ```
 
-```{r ridge_data_cv, include=TRUE, echo=FALSE, fig.cap="MISSING CAPTION!!!!!!!!!!!!!}
+```{r ridge_data_cv, include=TRUE, echo=FALSE, fig.cap="Cross-validation of separated ridge regression models"}
 ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
 
 ridge.mod.1.plot <- cbind.data.frame(exp(ridge.mod.1$lambda), ridge.mod.1$cvm)
@@ -334,7 +334,7 @@ pred <- cbind(pred1, pred2)
 mean(distances(pred, data[test, c("Latitude","Longitude")])) ## final result in km
 ```
 
-There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross-validation. Unfortunately, there is no built-in-function to perform the cross-validation in combination with glmnet as it was done with just one single output. So the cross-validation was written by hand. As it is not very optimized it takes over an hour to get a good value for lambda. So, that this process was done in a separate file. But the processed code is shown below:
+There is also a multivariate ridge regression model calculated, hence a single model with two outputs for latitude and longitude. The lambda is found by cross-validation. Unfortunately, there is no built-in-function to perform the cross-validation in combination with glmnet as it was done with just one single output. So the cross-validation was written by hand. As it is not very optimized it takes over an hour to get a good value for lambda. So that this process was done in a separate file. But the processed code is shown below:
 
 ```{r ridge_cv_code, include=TRUE, echo=TRUE, eval=FALSE}
 # cross validation function similiar to the CV lesson in ML 1
@@ -385,7 +385,7 @@ mean(distances_ridge_regression) ## final result in km
 
 Also the grid search for the best lambda is shown below. Two searches were done. A rough one to find the interval to search in with a finer cross-validation:
 
-```{r show_cv, include=TRUE, echo=FALSE, fig.cap="MSE", fig.cap="MISSING CAPTION!!!!!!!!!!!!!}
+```{r show_cv, include=TRUE, echo=FALSE, fig.cap="Cross-validation for combined ridge regression model"}
 cv.rough <- as.data.frame(cv.rough)
 ggplot() + geom_point(data = cv.rough, aes(x = log10(grid.rough), y = cv.err.rough), color = "blue") + theme_bw()  + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
 cv.fine <- as.data.frame(cv.fine)
@@ -530,7 +530,7 @@ names(distances_all)[names(distances_all) == "distances_ridge_regression"] <- "R
 names(distances_all)[names(distances_all) == "distances_NN"] <- "NN"
 
 ggplot() + theme_bw() + 
-  geom_boxplot(data=stack(distances_all), aes(y=values, x=ind), fill = c("grey", "blue", "orange"), outlier.color="red") + labs (y = "Distances [km]", x ="Method")
+  geom_boxplot(data=stack(distances_all), aes(y=values, x=ind), fill = c("grey", "blue", "orange"), outlier.color="red", alpha=0.4) + labs (y = "Distances [km]", x ="Method")
 ```
 
 In the boxplot above the distributions of the baseline and the two other algorithms are displayed next to each other. It is clearly to see that the baseline is worse than the two performed algorithms. Not just the median of the baseline is higher than the other two medians but especially the 75%-Quantile is much higher than the ones from the Ridge Regression and the NN. 
@@ -585,19 +585,17 @@ mp <- ggplot() + mapWorld +
 mp + theme_bw() + labs(x="Longitude [°]", y="Latitude [°]")
 ```
 
-```{r investigations_on_angles, include=TRUE, fig.cap="Angles between different predicted coordinates"}
+The world map above shows a sample of the predicted and true values. The predicted values for the neural net (red) and the ridge regression (blue) are displayed together with the true value. The predicted values are also linked to the true value. This makes it easier to investigate the relationships. It is quite interesting to see that the predictions in the near and middle east are much better than for South America, Africa or Australia. This might be caused to the unbalanced data set where fewer data points from these last mentioned continents were available.
+There is another quite interesting fact to see. The predictions were both wrong into the wrong direction, hence the angle between the connection lines is always quite small. This led us to investigate this behaviour further:
+
+```{r investigations_on_angles, include=TRUE, echo=FALSE, fig.cap="Angles between different predicted coordinates"}
 
 angle <- function(x,y){
   dot.prod <- x%*%y 
   norm.x <- norm(x,type="2")
   norm.y <- norm(y,type="2")
-  theta <- acos(dot.prod / (norm.x * norm.y))
+  theta <- acos(dot.prod / (norm.x * norm.y)) *180/pi
   alpha <- (as.numeric(theta))
-  if (alpha > pi/2) {
-    return(pi-alpha)
-  } else {
-    return(alpha)
-  }
 }
 
 vectors.RR <- as.matrix(pred_ridge_regression - y[test,])
@@ -607,9 +605,11 @@ for (i in 1:dim(vectors.RR)[1]) {
   angles[i] <- angle(vectors.RR[i,], vectors.NN[i,])
 }
 
-ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), outlier.color = "red", fill="blue") + xlab("Angle")
+ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), outlier.color = "red", fill="blue", alpha=0.2) + xlab("Angle [°]")
 
 ```
+
+We calculated the angle between the connections lines. It is quite surprising to see that 75% of the predictions differ with an angle of 30° or less. That is intersting as we would have assumed that these angles would be distributed more widely over the range of 180°. The models do not just perform on average quite well. They also do similar mistakes. So for the music of Brasil for example both models predict the origin to lay in Northern Africa (Algeria and Libya).  
 
 \newpage
 
@@ -622,6 +622,7 @@ The second algorithm chosen was neural network, out hypothesis was that this one
 
 If we compare the two models applied by looking at MSE we know that NN performed better than ridge regression, as we assumed, however the difference is less than 200km. In comparison, the algorithms presented in [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km. Another interesting thing to analyze is that, given the nature of the output variables of present analysis, the map showed in the 'Results' section give a visual overview of how big the errors of the models were. Talking about the sample illustrated in reference graph, we could notice that ridge regression is not doing good in predicting the items than belongs to America and that are less represented in our data set, this statement is also true for NN. Another feature to notice is that, also by the sample of the plot, both models are predicting some points in the ocean very far away from real observations.
 
+From the analysis of the angles we can also draw the conclusion that the models perform quite similar, not just for the distances but also the directions. This is surprising and presents a bunch of further questions: The models follow two very different approaches. Might the high errors in prediction and the same directions be less a problem of the models but more of the unbalanced data? So that there is too few data for the Southern half of the world. This phaenomenon could be further investigated by excluding these three continents Sub-Saharan Africa, South America and Australia from the analysis and verifying if the average distance drops dramatically. It could be also analysed by balancing the data, hence excluding part of the Near-middle-east data. Further research should concentrate on these approaches instead of trying another algorithm first.
 
 
 # Conclusion
