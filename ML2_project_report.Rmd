@@ -2,6 +2,7 @@
 title: "Machine learning II"
 author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
 date: "11.01.2022"
+bibliography: bibliography.bib
 output:
   pdf_document:
     toc: yes
@@ -71,6 +72,7 @@ print("boxplot für distances für jedes modell -> um diese vergleichen zu könn
 #install.packages("tensorflow")
 #install.packages("ggplot2")
 #install.packages("tensorflow")
+#install.packages("Metrics")
 
 library("glmnet")
 library("ggplot2")
@@ -120,7 +122,7 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 
 ## Insights into the Data
 
-```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold", echo=FALSE}
+```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold", echo=FALSE, fig.cap="Distribution of Mean and Standard Deviation"}
 # check if data is already standardized
 
 # get columns without the target cols ("long" and "lat")
@@ -154,7 +156,7 @@ ggplot(sd_and_mean_per_col_df, aes(x=mean_per_col)) +
 
 The paper[@Zhou2015] claims that the provided dataset is already standardized. To evaluate this statement, the mean and standard deviation for each feature column has been calculated and displayed in the boxplot above. This boxplot suggests that there is some kind of standardization, since all the features are roughly at a mean of 0 and a standard deviation of 1 (marked by the blue lines). But there are some outliers that have lower values. It seems like the standardization that the authors have been using was not super effective. Still we are not applying a second standardization on top of these standardization. This is mainly caused to be able to compare our findings with the one from the literature.
 
-```{r insights_create_worldmap, include=TRUE, echo=FALSE}
+```{r insights_create_worldmap, include=TRUE, echo=FALSE, fig.cap="Different regions in the dataset"}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
@@ -184,7 +186,7 @@ sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tra
 The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some rows are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
 
 
-```{r insights_3, include=TRUE, echo=FALSE}
+```{r insights_3, include=TRUE, echo=FALSE, fig.cap="Distribution of longitude and latitude"}
 df_lat <- data.frame(value = data$Latitude, dimension = "Latitude")
 df_long <- data.frame(value = data$Longitude, dimension = "Longitude")
 boxplot_df <- rbind(df_lat, df_long)
@@ -383,7 +385,7 @@ mean(distances_ridge_regression) ## final result in km
 
 Also the grid search for the best lambda is shown below. Two searches were done. A rough one to find the interval to search in with a finer cross-validation:
 
-```{r show_cv, include=TRUE, echo=FALSE}
+```{r show_cv, include=TRUE, echo=FALSE, fig.cap="MSE"}
 cv.rough <- as.data.frame(cv.rough)
 ggplot() + geom_point(data = cv.rough, aes(x = log10(grid.rough), y = cv.err.rough), color = "blue") + theme_bw()  + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
 cv.fine <- as.data.frame(cv.fine)
@@ -521,7 +523,7 @@ The mean prediction error [km] calculated with the custom distances function for
 
 # Results
 
-```{r comparisons_of_distributions, include=TRUE, echo=FALSE}
+```{r comparisons_of_distributions, include=TRUE, echo=FALSE, fig.cap="Distribution of discrepancy to correct location"}
 distances_all <- cbind.data.frame(distances_baseline, distances_ridge_regression, distances_test_NN)
 names(distances_all)[names(distances_all) == "distances_baseline"] <- "Baseline"
 names(distances_all)[names(distances_all) == "distances_ridge_regression"] <- "Ridge Regression"
@@ -537,7 +539,7 @@ A comparisons of the two performed algorithms is a bit more difficult. The media
 
 Further investigations have to be done by displaying the predictions on a map and linking them to the true origins of the music:
 
-```{r final_map_for_comparison, include=TRUE, echo=FALSE}
+```{r final_map_for_comparison, include=TRUE, echo=FALSE, fig.cap="Predicted results from different approaches"}
 # y[test,]
 target_values <- data.frame (Latitude = y[test,1],
                              Longitude = y[test,2])
@@ -583,7 +585,7 @@ mp <- ggplot() + mapWorld +
 mp + theme_bw() + labs(x="Longitude [°]", y="Latitude [°]")
 ```
 
-```{r investigations_on_angles, include=TRUE}
+```{r investigations_on_angles, include=TRUE, fig.cap="Angles between different predicted coordinates"}
 
 angle <- function(x,y){
   dot.prod <- x%*%y 
@@ -612,16 +614,19 @@ ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), 
 \newpage
 
 # Discussion
-As we introduced, predicting data points on the Earth using a latitude/longitude representation adds complexity to our problem because of the natural characteristics of coordinates. In first place longitude is discontinuous, meaning that the longitude of two points geographically near might be significantly different and secondly because coordinates are not linear. 
+As we introduced, predicting data points on the earth using a latitude/longitude representation adds complexity to our problem because of the natural characteristics of coordinates. In first place longitude is discontinuous, meaning that the longitude of two points geographically near might be significantly different and secondly because coordinates are not linear. 
 
 We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better because the nature of selected data is not linear. For the first algorithm implementation, ridge regression had been used to fit two separate models in order to get the two desired output variables, this approach would assume that longitude and latitude are stochastically independent. For a better comparison, ridge regression had been fitted also as multivariate model. For both cases cross-validation had been used to determine de optimal lamdba. We would assume than given the relation between longitude and latitude second model would perform better, however by the results indicates that the assumptions is not valid, since MSE for tho implementations was very similar, 4492.287km and 4461.744 respectively. 
 
 The second algorithm chosen was neural network, out hypothesis was that this one would lead better results to our problem than ridge regression  since its a parametric solution. Nevertheless, the 4 layer implementation achieved an error of 4287.664 km in the test data. While implementing it, we tried increasing hidden layers and number of neurons without important improvements. Which is better than ridge regression but not significantly. Even though we think that NN could be improved if we try other approaches like weight initialization. 
 
-If we compare the two models applied by looking at MSE we know that NN performed better than ridge regression, as we assumed, however the difference is less than 200km. In comparison, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km. Another interesting thing to analyse is that, given the nature of the output variables of present analysis, the map showed in the 'Results' section give a visual overview of how big the errors of the models were. Talking about the sample illustrated in reference graph, we could notice that ridge regression is not doing good in predicting the items than belongs to America and that are less represented in our data set, this statement is also true for NN. Another feature to notice is that, also by the sample of the plot, both models are predicting some points in the ocean very far away from real observations.
+If we compare the two models applied by looking at MSE we know that NN performed better than ridge regression, as we assumed, however the difference is less than 200km. In comparison, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km. Another interesting thing to analyze is that, given the nature of the output variables of present analysis, the map showed in the 'Results' section give a visual overview of how big the errors of the models were. Talking about the sample illustrated in reference graph, we could notice that ridge regression is not doing good in predicting the items than belongs to America and that are less represented in our data set, this statement is also true for NN. Another feature to notice is that, also by the sample of the plot, both models are predicting some points in the ocean very far away from real observations.
 
 
 
 # Conclusion
 In summary, through this analysis we addressed the topic of predicting the geographical origin of some music tracks with to different regression algorithms. We were more familiar with ridge regression but wanted to try also NN. It would be ideal if we could have improved the paper results of having an error between 3,100 and 3,600 kilometers but unfortunately that was not achieved with implemented algorithms. We could conclude that for given data, paper applied models: KNN and Random Forest Regression performed better. Further research on how to tackle geo-spacial output variables could be done to either implement different models that end to be more efficient or trying to improve the NN more. Considering the size of the dataset adding more tracks to the analysis would for sure led to better results. Finally, would be also interesting to tackle the problem as classification and compare results with this analysis so we could determine the best solution for the general problem. 
 
+\newpage
+
+# References
