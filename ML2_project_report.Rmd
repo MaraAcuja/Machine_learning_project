@@ -91,11 +91,6 @@ library(tensorflow)
 Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found interesting trying to apply some machine learning algorithms: ridge regression and neural networks and compare its results to determine the geographical origin of tracks based on different features.  
 
 # Data set
-Here should be a bit of a short summary of the data set with some key characteristics of the data set.
-
-What is it about? Which variables are included? What type of variables?
-What is missing? What about missing values?
-
 The data used in this project is provided by the authors of the paper "Predicting the Geographical Origin of Music"[@Zhou2015] who created and used this set as basis for this paper. The key information embedded in this data set are attributes of music pieces labeled by there point of origin.
 
 The authors collected 1,142 pieces of music from a personal CD-collection. The target values represented by longitude and latitude are the main country/area of residence of the artists that produced the music. Over all the authors collected music from 73 countries/areas not including western style music, since this category is called to have a global influence and therefor unfitted for predicting a specific country/region. 
