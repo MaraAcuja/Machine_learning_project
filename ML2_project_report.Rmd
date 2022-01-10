@@ -272,7 +272,7 @@ anova(model.lm.all, model.lm.sig)
 The model tells that there is a difference and, as seen before, the smaller model performs better.
 
 
-```{r linear_regression_boxplot, echo=FALSE, fig.cap="Comparison of error of baseline models"}
+```{r linear_regression_boxplot, include=TRUE, echo=FALSE, fig.cap="Comparison of error of baseline models"}
 # TODO:  in GGPLOT2
 small.model <- distances(pred.sig, data[test, c("Latitude","Longitude")])
 full.model <- distances(pred.all, data[test, c("Latitude","Longitude")])
@@ -301,20 +301,24 @@ x <- model.matrix(cbind(Longitude, Latitude)~., data)[,1:116]
 y <- data[, c("Latitude", "Longitude")]
 ```
 
-```{r ridge_data_cv, include=TRUE, echo=FALSE, fig.cap="Cross-validation of separated ridge regression models"}
+```{r ridge_data_cv, include=TRUE, echo=FALSE, fig.cap="Cross-validation of separated ridge regression models - Latitude"}
 ridge.mod.1 <- cv.glmnet(x[train,], y[train,1], alpha=0)
 
 ridge.mod.1.plot <- cbind.data.frame(exp(ridge.mod.1$lambda), ridge.mod.1$cvm)
 ggplot() + geom_point(data=ridge.mod.1.plot, aes(x=log10(ridge.mod.1$lambda), y=ridge.mod.1$cvm), color="red") + theme_bw() + labs(y="MSE", x = (expression(Log[10] (lambda)))) 
+```
 
+
+```{r ridge_data_cv_2, include=TRUE, echo=FALSE, fig.cap="Cross-validation of separated ridge regression models - Longitude"}
 bestlam1 <- ridge.mod.1$lambda.min
 
 ridge.mod.2 <- cv.glmnet(x[train,], y[train,2], alpha=0)
 
 ridge.mod.2.plot <- cbind.data.frame(exp(ridge.mod.2$lambda), ridge.mod.2$cvm)
-ggplot() + geom_point(data=ridge.mod.2.plot, aes(x=log10(ridge.mod.2$lambda), y=ridge.mod.2$cvm), color="red") + theme_bw() + labs(y="MSE", x = (expression(Log[10] (lambda)))) 
 
 bestlam2 <- ridge.mod.2$lambda.min
+
+ggplot() + geom_point(data=ridge.mod.2.plot, aes(x=log10(ridge.mod.2$lambda), y=ridge.mod.2$cvm), color="red") + theme_bw() + labs(y="MSE", x = (expression(Log[10] (lambda)))) 
 ```
 
 It can be seen that the distributions for lambda are quite similar for both models. Although the MSE for both models differ the optimal lambda is quite similar:
@@ -382,12 +386,15 @@ mean(distances_ridge_regression) ## final result in km
 ```
 
 
-
 Also the grid search for the best lambda is shown below. Two searches were done. A rough one to find the interval to search in with a finer cross-validation:
 
-```{r show_cv, include=TRUE, echo=FALSE, fig.cap="Cross-validation for combined ridge regression model"}
+```{r show_cv, include=TRUE, echo=FALSE, fig.cap="Cross-validation for combined ridge regression model - rough"}
 cv.rough <- as.data.frame(cv.rough)
 ggplot() + geom_point(data = cv.rough, aes(x = log10(grid.rough), y = cv.err.rough), color = "blue") + theme_bw()  + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
+```
+
+
+```{r show_cv_2, include=TRUE, echo=FALSE, fig.cap="Cross-validation for combined ridge regression model - fine"}
 cv.fine <- as.data.frame(cv.fine)
 ggplot() + geom_point(data = cv.fine, aes(x = log10(grid.fine), y = cv.err.fine), color = "red") + theme_bw() + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
 ```
