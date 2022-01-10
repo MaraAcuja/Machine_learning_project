@@ -3,10 +3,10 @@ title: "Machine learning II"
 author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
 date: "11.01.2022"
 output:
-  word_document:
-    toc: yes
-    toc_depth: '2'
-  html_document: default
+  #word_document:
+  #  toc: yes
+  #  toc_depth: '2'
+  #html_document: default
   pdf_document:
     toc: yes
     toc_depth: 2
@@ -30,7 +30,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r todos_for_Vy, include=FALSE, echo=FALSE}
 ### TODO for Vy
 
-# more text to explain the findings of the NN. What does the numbers mean? [Vy]
+# Explain NNs in general -> check
+# more text to explain the findings of the NN. What does the numbers mean? -> check
 ```
 
 ```{r todos_for_Stefan, include=FALSE, echo=FALSE}
@@ -80,15 +81,19 @@ library(ISLR)
 options(rgl.printRglwidget = TRUE)
 library(rgl)
 
+library(Metrics)
 library(keras)
 library(tensorflow)
+set_random_seed(1)
 
 ```
 
-# Comparison of machine learning algorithms / Introduction / Theory
-Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found interesting trying to apply some machine learning algorithms: ridge regression and neural networks and compare its results to determine the geographical origin of tracks based on different features.  
+\newpage
 
-# Data set
+# Introduction
+Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found it very interesting trying to apply some selected machine learning algorithms for comparison: Ridge Regression and Neural Networks (NNs) and compare its results to determine the geographical origin of tracks based on different features.  
+
+# The Data Set
 Here should be a bit of a short summary of the data set with some key characteristics of the data set.
 
 What is it about? Which variables are included? What type of variables?
@@ -116,7 +121,7 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 
 ```
 
-## some insights into the data
+## Insights into the Data
 
 ```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold", echo=FALSE}
 # check if data is already standardized
@@ -160,7 +165,8 @@ mp <- ggplot() + mapWorld
 mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5) + theme_bw()
 ```
 
-## Discrepancy between data set and description of the data in the paper
+## Discrepancy Data and Paper
+There seem to be discrepancies between the data set and the description of the data in the mentioned paper:
 When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returns 33 data points. The following code investigates this difference.
 
 ```{r insights_the_region_conspiracy, include=TRUE}
@@ -196,7 +202,7 @@ To get a better overview of the data, the longitude and latitude of every observ
 
 The one outlier in the latitude box at roughly -38, is the region of "Sydney" in Australia, which interestingly is not the capital of the country, in contradiction to what has been stated in the paper.
 
-## Data preparation
+## Data Preparation
 
 The data is divided into a training set (80%) and into a test set (20%). A separate validation set was not defined as cross-validation was used or the validation was done directly within the algorithm.
 
@@ -207,9 +213,11 @@ train <- sample(1:n, 0.8*n)
 test <- (1:n)[-train]
 ```
 
+\newpage
 
+# Analysis
 
-# Method
+## Method
 
 We treat the problem of predicting the geographical origin of music as a regression problem since we want to predict the spherical coordinates (longitude and latitude).
 In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric: The geographical distance from the true position.
@@ -270,6 +278,8 @@ The model tells that there is a difference and, as seen before, the smaller mode
 # TODO:  in GGPLOT2
 boxplot(c(distances(pred.sig, data[test, c("Latitude","Longitude")]), distances(pred.all, data[test, c("Latitude","Longitude")]))) 
 ```
+
+\newpage
 
 ## Algorithm 1 - Ridge Regression
 
@@ -377,17 +387,31 @@ cv.fine <- as.data.frame(cv.fine)
 ggplot() + geom_point(data = cv.fine, aes(x = log10(grid.fine), y = cv.err.fine), color = "red") + theme_bw() + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
 ```
 
-
-
+\newpage
 
 ## Algorithm 2 - Artificial Neural Networks (NNs)
-Short introduction of the second algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
 
-For the second algorithm we'll be using Artificial Neural Networks (NNs) as they can be used for regression problems as well. 
-To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimizing the loss function, which for NN-regression is the mean of squared errors MSE over the training set.
-In the case of fitting a neural network, it is much faster if the data are scaled/normalised first and also gives more appropriate results if the features that are used have different scales and ranges. But this is already the case here.
+For the second algorithm we'll be using Artificial Neural Networks (NNs) as they can be used for regression problems as well.
+NNs are modeled loosely on the human brain and can consist of thousands or even millions of simple processing nodes that are densely interconnected. They are organized into layers of nodes, and they’re “feed-forward”: The data moves through them in only one direction [@nn_mit].
 
-The NN takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression. In-between Input and Output Layer are a few more layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
+![A Simple Neural Network.](images/neural_net.png){width=50%}
+
+NNs consist of node layers, containing an input layer, one or more hidden layers, and an output layer. Each node, or artificial neuron, connects to another and has an associated weight and threshold [@nn_ibm].
+So each one is composed of input data, weights, a bias (or threshold) and an output.The equation for a NN is a linear combination of the independent variables and their respective weights and bias (or the intercept) term for each neuron:
+$$ Z = \sum_{j=1} ^{n} { w_ix_i } + bias = w_1x_1 + w_2x_2 + ... + w_nx_n + w_0 $$
+with $w_i$ being the weights or beta coefficients and $x_i$ being the independent variables or inputs and $w_0$ being the bias/intercept. The weights help determine the importance of any given variable: Larger ones will contribute significantly more to the output compared to other inputs. With this equation and the input we can then calculate our output.
+
+To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimizing the loss function, which for NN-regression is the mean of squared errors MSE over the training set. As we train the model, we’ll want to evaluate its accuracy using a cost (or loss or error) function.
+$$ MSE = \frac{1}{n} \sum_{i=1}^{n}{(y - \hat{y_i})^2} $$
+The goal is to minimize our cost function to ensure goodness of fit for any given observation. So in this case the MSE, which is calculated with the square of the difference between the actual and predicted value for each observation, is to be minimized. The model adjusts its weights and biases to reach the point of convergence, or the local minimum [@nn_ibm].
+
+In the case of fitting a neural network, it is much faster if the data are scaled/normalised first and also gives more appropriate results if the features that are used have different scales and ranges. Since this is already the case with the data we have here, we won't have to do this anymore.
+
+The advantages of NNs are that they are very powerful and enable the implementation of more complex matters. For our purposes, we can easily configure a multi-output neural network for our regression problem, so that two values for Latitude and Longitude are given at once.
+Disadvantages could be that NNs are computationally more expensive and they might be unnecessarily complicated for more simple/not as complex tasks, depending on what one is trying to achieve. They could also be seen as some kind of blackbox, so there's also a trade-off between interpretability/explainability and the performance.
+
+The NN used here takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression. In-between Input and Output Layer are a few more Layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) as loss function and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
+For the implementation we have used the keras and tensorflow libraries to define, compile and fit the model.
 
 The results are visualized below.
 
@@ -427,42 +451,70 @@ history <- model %>% fit(
      batch_size = 128, 
      validation_split = 0.2
  )
-
-# Plot the history
-plot(history)
-
-# Plot the MSE of the training data 
-plot(history$metrics$mean_squared_error, main="Model's Mean Squared Error", xlab = "epoch", ylab="mae", col="blue", type="l")
-
-# Plot the MSE of the validation data
-lines(history$metrics$val_mean_squared_error, col="green")
-
-# Add Legend
-legend("topright", c("train","val_train"), col=c("blue", "green"), lty=c(1,1))
-
-# MSE of train data
-y_preds_train<-model %>% predict(X_train)
-mean((y_train - y_preds_train)^2)
-
-# Customized distance metric
-mean(distances(y_train, y_preds_train)) 
 ```
 
-For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and use the MSE as well as the custom distance metric. We get the following results:
+```{r neural_network_plots, include=TRUE, echo=FALSE, out.width="50%", fig.show="hold", fig.cap="Visualization Model Training"}
+# Plot the history
+#plot(history)
 
-```{r NN_distance_metric, include=TRUE, echo=FALSE}
+# Plot the MSE of the training data 
+plot(history$metrics$mean_squared_error, main="Model's Mean Squared Error", xlab = "epoch", ylab="mse", col="#d42a44", type="l")
+
+# Plot the MSE of the validation data
+lines(history$metrics$val_mean_squared_error, col="#009999")
+
+# Add Legend
+legend("topright", c("training","validation"), col=c("#d42a44", "#009999"), lty=c(1,1))
+
+# Plot the MAE of the training data 
+plot(history$metrics$mean_absolute_error, main="Model's Mean Absolute Error", xlab = "epoch", ylab="mae", col="#d42a44", type="l")
+
+# Plot the MAE of the validation data
+lines(history$metrics$val_mean_absolute_error, col="#009999")
+
+# Add Legend
+legend("topright", c("training","validation"), col=c("#d42a44", "#009999"), lty=c(1,1))
+```
+
+For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and use the MSE, the MAE as well as the custom distances metric we defined earlier. The MAE is calculated as follows:
+$$ MAE = \frac{1}{n} \sum_{i=1}^{n}{|y - \hat{y_i}|} $$
+We get the following results for the train and test data and the different evaluation metrics:
+
+```{r neural_network_results, include=TRUE, echo=FALSE}
+library(knitr)
+
+### Train data ###
+
+# MSE and MAE of train data
+y_preds_train<-model %>% predict(X_train)
+mse_train<-mean((y_train - y_preds_train)^2)
+mae_train<-mae(y_train, y_preds_train)
+
+# Customized distance metric
+distances_mean_train<-mean(distances(y_train, y_preds_train)) 
+
 ### Test data ###
-set.seed(1)
+
 # Predict the Latitude for the test data
 y_pred_neural_net <- model %>% predict(X_test)
 
-# Evaluate with MSE
-mean((y_test - y_pred_neural_net)^2)
+# Evaluate with MSE and MAE
+mse_test<-mean((y_test - y_pred_neural_net)^2)
+mae_test<-mae(y_test, y_pred_neural_net)
 
 # Evaluate on test data and labels with customized distance metric
-distances_NN <- distances(y_test, y_pred_neural_net)
-mean(distances_NN)                   # 4122.794
+distances_test_NN<-distances(y_test, y_pred_neural_net)
+distances_mean_test<-mean(distances_test_NN)                   # 4122.794
+
+df <- data.frame(Metric = c("MSE", "MAE", "Custom Distances Mean"),
+                 "Train Data" = c(round(mse_train, 3), round(mae_train, 3), round(distances_mean_train, 3)),
+                 "Test Data" = c(round(mse_test, 3),round(mae_test, 3), round(distances_mean_test, 3)), check.names = FALSE)
+
+kable(df, caption = "Neural Network Results")
 ```
+
+As we can see, the results on the training data are, as expected, better than for the test data. The MSE for both sets are quite different though, with the training data having an MSE of 644,28 and the test data having one around 67% higher. The values for the MAE have a discrepancy of approximately 26%.
+The mean prediction error [km] calculated with the custom distances function for the training data is 3300,87 km, for the test data it's 4207,86 km.
 
 # Results
 
@@ -471,7 +523,7 @@ Here some tables, summaries or especially graphs should be shown here. Maybe thi
 We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. First, in our implementation of ridge regression we are fitting two separate models in order to get the two desired output variables. Nevertheless, we know that latitude and longitude are correlated variables, fact that ridge regression doesn't take into account so we expected a bigger error than NN. In the contrary, above implementation of neural network is predicting two variables at once like examples given in paper. 
 
 ```{r comparisons_of_distributions, include=TRUE, echo=FALSE}
-distances_all <- cbind.data.frame(distances_baseline, distances_ridge_regression, distances_NN)
+distances_all <- cbind.data.frame(distances_baseline, distances_ridge_regression, distances_test_NN)
 names(distances_all)[names(distances_all) == "distances_baseline"] <- "Baseline"
 names(distances_all)[names(distances_all) == "distances_ridge_regression"] <- "Ridge Regression"
 names(distances_all)[names(distances_all) == "distances_NN"] <- "NN"
@@ -559,6 +611,7 @@ ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), 
 
 ```
 
+\newpage
 
 # Discussion
  
