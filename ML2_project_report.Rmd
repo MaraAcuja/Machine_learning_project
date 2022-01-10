@@ -36,14 +36,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r todos_for_Stefan, include=FALSE, echo=FALSE}
 ### TODO for Stefan
 
-# add a small text to the standardizsation of the data [Stefan]
-# "conspicuousness" --> new name and maybe the graph after the image of the map [Stefan]
-# text for the boxplot of latitude and longitude [Stefan]
-#replace normal plots in ggplot
-#add + theme_bw() to each ggplot
-print("scatter plot für koordinaten und box plot für varianz in long und lat") # why did we want this? its in the project, but the scatter plot is basically just the map without the cool parts 
-print("boxplot für distances für jedes modell -> um diese vergleichen zu können")
-print("für finales ergebniss, ein karte, welche ? ist und soll koorinaten anzeigt und mit linien verbindet")
+# add a small text to the standardization of the data [Stefan] -> check
+# "conspicuousness" --> new name and maybe the graph after the image of the map [Stefan] -> check
+# text for the boxplot of latitude and longitude [Stefan] -> check
+#replace normal plots in ggplot -> check
+#add + theme_bw() to each ggplot -> check
+print("scatter plot für koordinaten und box plot für varianz in long und lat") # -> ceck
+print("boxplot für distances für jedes modell -> um diese vergleichen zu können") # -> someone else did it already ... thx^^
 ```
 
 ```{r todos_for_matthias, include=TRUE, echo=FALSE}
@@ -95,7 +94,7 @@ Here should be a bit of a short summary of the data set with some key characteri
 What is it about? Which variables are included? What type of variables?
 What is missing? What about missing values?
 
-The data used in this project is provided by the authors of the paper "Predicting the Geographical Origin of Music"[@Zhou2015 who created and used this set as basis for this paper. The key information embedded in this data set are attributes of music pieces labeled by there point of origin.
+The data used in this project is provided by the authors of the paper "Predicting the Geographical Origin of Music"[@Zhou2015] who created and used this set as basis for this paper. The key information embedded in this data set are attributes of music pieces labeled by there point of origin.
 
 The authors collected 1,142 pieces of music from a personal CD-collection. The target values represented by longitude and latitude are the main country/area of residence of the artists that produced the music. Over all the authors collected music from 73 countries/areas not including western style music, since this category is called to have a global influence and therefor unfitted for predicting a specific country/region. 
 
@@ -136,23 +135,32 @@ sd_and_mean_per_col_df <- merge(sd_per_col_df, mean_per_col_df, by="row.names", 
 
 #par(mar = c(4, 4, .1, .1)) # to make the two plots show side by side and not above each other
 
-boxplot(sd_per_col, data=sd_and_mean_per_col_df, xlab="standard deviation (blue line at 1)", y_lab="value", main="standard deviation of the 116 columns")
-abline(h=1, col = "blue", lty=5)
+ggplot(sd_and_mean_per_col_df, aes(x=sd_per_col)) + 
+  geom_boxplot(fill="slateblue", alpha=0.2) + 
+  geom_vline(xintercept=1, linetype="dashed", color = "blue") +
+  labs(title="standard deviation of the 116 columns",
+        y ="standard deviation (blue line at 1)", x = "") +
+  coord_flip() + theme_bw()
 
-boxplot(mean_per_col, data=sd_and_mean_per_col_df, xlab="mean (blue line at 0)", y_lab="value", main="mean of the 116 columns")
-abline(h=0, col = "blue", lty=5)
+ggplot(sd_and_mean_per_col_df, aes(x=mean_per_col)) + 
+  geom_boxplot(fill="slateblue", alpha=0.2) + 
+  geom_vline(xintercept=0, linetype="dashed", color = "blue") +
+  labs(title="mean of the 116 columns",
+        y ="mean (blue line at 0)", x = "") +
+  coord_flip() + theme_bw()
 ```
 
+The paper[@Zhou2015] claims that the provided dataset is already standardized. To evaluate this statement, the mean and standard deviation for each feature column has been calculated and displayed in the boxplot above. This boxplot suggests that there is some kind of standardization, since all the features are roughly at a mean of 0 and a standard deviation of 1 (marked by the blue lines) but there are some outliers that have lower values. It seems like the standardization that the authors have been using was not super effective. Still we are not applying a second standardization on top of there standardization.
 
 ```{r insights_create_worldmap, include=TRUE, echo=FALSE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
 
-mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5)
+mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5) + theme_bw()
 ```
 
-## Conspicuousness
+## Discrepancy between data set and description of the data in the paper
 When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returns 33 data points. The following code investigates this difference.
 
 ```{r insights_the_region_conspiracy, include=TRUE}
@@ -177,8 +185,16 @@ df_lat <- data.frame(value = data$Latitude, dimension = "Latitude")
 df_long <- data.frame(value = data$Longitude, dimension = "Longitude")
 boxplot_df <- rbind(df_lat, df_long)
 
-boxplot(value~dimension, data=boxplot_df)
+ggplot(boxplot_df, aes(x=value, y=dimension)) + 
+  geom_boxplot(fill="slateblue", alpha=0.2) + 
+  labs(title="Range of longitude and latitude observations",
+        y ="dimension", x = "value") +
+  coord_flip() + theme_bw()
 ```
+
+To get a better overview of the data, the longitude and latitude of every observation have been plotted in a box plot. As expected from the map above, the median of both the latitude and longitude is at around 35 which would be the area around the middle east (more specific Turkey, Syria, Lebanon) which when looking at the map is more or less the center of all the regions. This is because most data point are Europe, South Asia Africa, where only three regions are in america. Also as expected, the longitude observations have roughly twice the range of the longitude observations, which can be explained by the natural range of those measurements (Longitude ranges form -180 to 180 and latitude ranges from -90 to 90).
+
+The one outlier in the latitude box at roughly -38, is the region of "Sydney" in Australia, which interestingly is not the capital of the country, in contradiction to what has been stated in the paper.
 
 ## Data preparation
 
@@ -462,7 +478,6 @@ names(distances_all)[names(distances_all) == "distances_NN"] <- "NN"
 
 ggplot() + theme_bw() + 
   geom_boxplot(data=stack(distances_all), aes(y=values, x=ind), fill = c("grey", "blue", "orange"), outlier.color="red") + labs (y = "Distances [km]", x ="Method")
-
 ```
 
 In the boxplot above the distributions of the baseline and the two other algorithms are displyed next to each other. It is clearly to see that the baseline is worse than the two performed algorithms. Not just the median of the baseline is higher than the other two medians but especially the 75%-Quantile is much higher than the ones from the Ridge Regression and the NN. 
@@ -515,7 +530,7 @@ mp <- ggplot() + mapWorld +
   geom_line(data = aggregated_results_ridge_regression_10_percent, aes(Longitude, Latitude, group=index, color="RidgeRegression")) +
   geom_point(size = 1, data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color=source)) +
   geom_line(data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color="NeuralNet"))
-mp
+mp + theme_bw()
 ```
 
 ```{r investigations_on_angles, include=TRUE}
