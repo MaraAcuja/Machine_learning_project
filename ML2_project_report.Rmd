@@ -30,7 +30,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r todos_for_Vy, include=FALSE, echo=FALSE}
 ### TODO for Vy
 
-# more text to explain the findings of the NN. What does the numbers mean? [Vy]
+# Explain NNs in general -> check
+# more text to explain the findings of the NN. What does the numbers mean? -> check
 ```
 
 ```{r todos_for_Stefan, include=FALSE, echo=FALSE}
@@ -82,15 +83,19 @@ library(ISLR)
 options(rgl.printRglwidget = TRUE)
 library(rgl)
 
+library(Metrics)
 library(keras)
 library(tensorflow)
+set_random_seed(1)
 
 ```
 
-# Comparison of machine learning algorithms / Introduction / Theory
-Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found interesting trying to apply some machine learning algorithms: ridge regression and neural networks and compare its results to determine the geographical origin of tracks based on different features.  
+\newpage
 
-# Data set
+# Introduction
+Ethnomusicology is the study of music in its social and cultural contexts. Being a highly interdisciplinary field of research, we found it very interesting trying to apply some selected machine learning algorithms for comparison: Ridge Regression and Neural Networks (NNs) and compare its results to determine the geographical origin of tracks based on different features.  
+
+# The Data Set
 The data used in this project is provided by the authors of the paper "Predicting the Geographical Origin of Music"[@Zhou2015] who created and used this set as basis for this paper. The key information embedded in this data set are attributes of music pieces labeled by there point of origin.
 
 The authors collected 1,142 pieces of music from a personal CD-collection. The target values represented by longitude and latitude are the main country/area of residence of the artists that produced the music. Over all the authors collected music from 73 countries/areas not including western style music, since this category is called to have a global influence and therefor unfitted for predicting a specific country/region. 
@@ -113,7 +118,7 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 
 ```
 
-## Some insights into the data
+## Insights into the Data
 
 ```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold", echo=FALSE}
 # check if data is already standardized
@@ -147,17 +152,18 @@ ggplot(sd_and_mean_per_col_df, aes(x=mean_per_col)) +
   coord_flip() + theme_bw()
 ```
 
-The paper[@Zhou2015] claims that the provided dataset is already standardized. To evaluate this statement, the mean and standard deviation for each feature column has been calculated and displayed in the boxplot above. This boxplot suggests that there is some kind of standardization, since all the features are roughly at a mean of 0 and a standard deviation of 1 (marked by the blue lines) but there are some outliers that have lower values. It seems like the standardization that the authors have been using was not super effective. Still we are not applying a second standardization on top of there standardization.
+The paper[@Zhou2015] claims that the provided dataset is already standardized. To evaluate this statement, the mean and standard deviation for each feature column has been calculated and displayed in the boxplot above. This boxplot suggests that there is some kind of standardization, since all the features are roughly at a mean of 0 and a standard deviation of 1 (marked by the blue lines). But there are some outliers that have lower values. It seems like the standardization that the authors have been using was not super effective. Still we are not applying a second standardization on top of these standardization. This is mainly caused to be able to compare our findings with the one from the literature.
 
 ```{r insights_create_worldmap, include=TRUE, echo=FALSE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
 
-mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5) + theme_bw()
+mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5) + theme_bw() + labs(x= "Longitude [°]", y= "Latitude [°]")
 ```
 
-## Discrepancy between data set and description of the data in the paper
+## Discrepancy Data and Paper
+There seem to be discrepancies between the data set and the description of the data in the mentioned paper:
 When looking at the map, it seems like there are way fewer unique data points than expected. The paper states that there are 1,142 pieces from 73 countries/areas, but counting the point on the map just returns 33 data points. The following code investigates this difference.
 
 ```{r insights_the_region_conspiracy, include=TRUE}
@@ -175,7 +181,7 @@ nrow(occurences_per_region) # returns 33 -> 33 regions in the data set and not 7
 sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tracks in the data set
 ```
 
-The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only belong to 33 different regions. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some row are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
+The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some rows are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
 
 
 ```{r insights_3, include=TRUE, echo=FALSE}
@@ -186,15 +192,15 @@ boxplot_df <- rbind(df_lat, df_long)
 ggplot(boxplot_df, aes(x=value, y=dimension)) + 
   geom_boxplot(fill="slateblue", alpha=0.2) + 
   labs(title="Range of longitude and latitude observations",
-        y ="dimension", x = "value") +
+        y ="Dimension", x = "Angle [°]") +
   coord_flip() + theme_bw()
 ```
 
-To get a better overview of the data, the longitude and latitude of every observation have been plotted in a box plot. As expected from the map above, the median of both the latitude and longitude is at around 35 which would be the area around the middle east (more specific Turkey, Syria, Lebanon) which when looking at the map is more or less the center of all the regions. This is because most data point are Europe, South Asia Africa, where only three regions are in America. Also as expected, the longitude observations have roughly twice the range of the longitude observations, which can be explained by the natural range of those measurements (Longitude ranges form -180 to 180 and latitude ranges from -90 to 90).
+To get a better overview of the data, the longitude and latitude of every observation have been plotted in a box plot. As expected from the map above, the median of both the latitude and longitude is at around 35 which would be the area around the middle east (more specific Turkey, Syria, Lebanon) which when looking at the map is more or less the center of all the regions. This is because most data points are Europe, South Asia and Africa, while only three regions are in America. Also as expected, the longitude observations have roughly twice the range of the longitude observations, which can be explained by the natural range of those measurements (Longitude ranges form -180 to 180 and latitude ranges from -90 to 90).
 
-The one outlier in the latitude box at roughly -38, is the region of "Sydney" in Australia, which interestingly is not the capital of the country, in contradiction to what has been stated in the paper.
+The one outlier in the latitude box at roughly -38, is the region of "Canberra" in Australia.
 
-## Data preparation
+## Data Preparation
 
 The data is divided into a training set (80%) and into a test set (20%). A separate validation set was not defined as cross-validation was used or the validation was done directly within the algorithm.
 
@@ -205,7 +211,11 @@ train <- sample(1:n, 0.8*n)
 test <- (1:n)[-train]
 ```
 
-# Method
+\newpage
+
+# Analysis
+
+## Method
 
 We treat the problem of predicting the geographical origin of music as a regression problem since we want to predict the spherical coordinates (longitude and latitude). In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric: The geographical distance from the true position.
 
@@ -262,8 +272,17 @@ The model tells that there is a difference and, as seen before, the smaller mode
 
 ```{r linear_regression_boxplot, echo=FALSE}
 # TODO:  in GGPLOT2
-boxplot(c(distances(pred.sig, data[test, c("Latitude","Longitude")]), distances(pred.all, data[test, c("Latitude","Longitude")]))) 
+small.model <- distances(pred.sig, data[test, c("Latitude","Longitude")])
+full.model <- distances(pred.all, data[test, c("Latitude","Longitude")])
+baseline.plot <- cbind.data.frame(small.model, full.model)
+
+names(baseline.plot)[names(baseline.plot) == "small.model"] <- "Significant Variables"
+names(baseline.plot)[names(baseline.plot) == "full.model"] <- "All Variables"
+
+ggplot() + geom_boxplot(data=stack(baseline.plot), aes(y=values, x=ind), outlier.color="red", fill="blue", alpha=0.2) + theme_bw() + labs(x="Model", y = "Distances [km]")
 ```
+
+\newpage
 
 ## Algorithm 1 - Ridge Regression
 
@@ -371,15 +390,31 @@ cv.fine <- as.data.frame(cv.fine)
 ggplot() + geom_point(data = cv.fine, aes(x = log10(grid.fine), y = cv.err.fine), color = "red") + theme_bw() + labs(y = "MSE [km]", x = (expression(Log[10] (lambda))))
 ```
 
-
-
+\newpage
 
 ## Algorithm 2 - Artificial Neural Networks (NNs)
-For the second algorithm we'll be using Artificial Neural Networks (NNs) as they can be used for regression problems as well. 
-To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimizing the loss function, which for NN-regression is the mean of squared errors MSE over the training set.
-In the case of fitting a neural network, it is much faster if the data are scaled/normalised first and also gives more appropriate results if the features that are used have different scales and ranges. But this is already the case here.
 
-The NN takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression. In-between Input and Output Layer are a few more layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
+For the second algorithm we'll be using Artificial Neural Networks (NNs) as they can be used for regression problems as well.
+NNs are modeled loosely on the human brain and can consist of thousands or even millions of simple processing nodes that are densely interconnected. They are organized into layers of nodes, and they’re “feed-forward”: The data moves through them in only one direction [@nn_mit].
+
+![A Simple Neural Network.](images/neural_net.png){width=50%}
+
+NNs consist of node layers, containing an input layer, one or more hidden layers, and an output layer. Each node, or artificial neuron, connects to another and has an associated weight and threshold [@nn_ibm].
+So each one is composed of input data, weights, a bias (or threshold) and an output.The equation for a NN is a linear combination of the independent variables and their respective weights and bias (or the intercept) term for each neuron:
+$$ Z = \sum_{j=1} ^{n} { w_ix_i } + bias = w_1x_1 + w_2x_2 + ... + w_nx_n + w_0 $$
+with $w_i$ being the weights or beta coefficients and $x_i$ being the independent variables or inputs and $w_0$ being the bias/intercept. The weights help determine the importance of any given variable: Larger ones will contribute significantly more to the output compared to other inputs. With this equation and the input we can then calculate our output.
+
+To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimizing the loss function, which for NN-regression is the mean of squared errors MSE over the training set. As we train the model, we’ll want to evaluate its accuracy using a cost (or loss or error) function.
+$$ MSE = \frac{1}{n} \sum_{i=1}^{n}{(y - \hat{y_i})^2} $$
+The goal is to minimize our cost function to ensure goodness of fit for any given observation. So in this case the MSE, which is calculated with the square of the difference between the actual and predicted value for each observation, is to be minimized. The model adjusts its weights and biases to reach the point of convergence, or the local minimum [@nn_ibm].
+
+In the case of fitting a neural network, it is much faster if the data are scaled/normalised first and also gives more appropriate results if the features that are used have different scales and ranges. Since this is already the case with the data we have here, we won't have to do this anymore.
+
+The advantages of NNs are that they are very powerful and enable the implementation of more complex matters. For our purposes, we can easily configure a multi-output neural network for our regression problem, so that two values for Latitude and Longitude are given at once.
+Disadvantages could be that NNs are computationally more expensive and they might be unnecessarily complicated for more simple/not as complex tasks, depending on what one is trying to achieve. They could also be seen as some kind of blackbox, so there's also a trade-off between interpretability/explainability and the performance.
+
+The NN used here takes all features from the training data and outputs two values for the Latitude and Longitude, so it is a multi-output regression. In-between Input and Output Layer are a few more Layers defined which all use ReLU as activation function. For compiling and fitting the model we again use the Mean Squared Error (MSE) as loss function and Adam as the optimizer. We let the model train for 100 epochs with a batch size of 128 and validation split of 0.2.
+For the implementation we have used the keras and tensorflow libraries to define, compile and fit the model.
 
 The results are visualized below.
 
@@ -419,47 +454,75 @@ history <- model %>% fit(
      batch_size = 128, 
      validation_split = 0.2
  )
-
-# Plot the history
-plot(history)
-
-# Plot the MSE of the training data 
-plot(history$metrics$mean_squared_error, main="Model's Mean Squared Error", xlab = "epoch", ylab="mae", col="blue", type="l")
-
-# Plot the MSE of the validation data
-lines(history$metrics$val_mean_squared_error, col="green")
-
-# Add Legend
-legend("topright", c("train","val_train"), col=c("blue", "green"), lty=c(1,1))
-
-# MSE of train data
-y_preds_train<-model %>% predict(X_train)
-mean((y_train - y_preds_train)^2)
-
-# Customized distance metric
-mean(distances(y_train, y_preds_train)) 
 ```
 
-For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and use the MSE as well as the custom distance metric. We get the following results:
+```{r neural_network_plots, include=TRUE, echo=FALSE, out.width="50%", fig.show="hold", fig.cap="Visualization Model Training"}
+# Plot the history
+#plot(history)
 
-```{r NN_distance_metric, include=TRUE, echo=FALSE}
+# Plot the MSE of the training data 
+plot(history$metrics$mean_squared_error, main="Model's Mean Squared Error", xlab = "epoch", ylab="mse", col="#d42a44", type="l")
+
+# Plot the MSE of the validation data
+lines(history$metrics$val_mean_squared_error, col="#009999")
+
+# Add Legend
+legend("topright", c("training","validation"), col=c("#d42a44", "#009999"), lty=c(1,1))
+
+# Plot the MAE of the training data 
+plot(history$metrics$mean_absolute_error, main="Model's Mean Absolute Error", xlab = "epoch", ylab="mae", col="#d42a44", type="l")
+
+# Plot the MAE of the validation data
+lines(history$metrics$val_mean_absolute_error, col="#009999")
+
+# Add Legend
+legend("topright", c("training","validation"), col=c("#d42a44", "#009999"), lty=c(1,1))
+```
+
+For evaluation we predict the Longitude and Latitude for the same test data as for the other regression cases and use the MSE, the MAE as well as the custom distances metric we defined earlier. The MAE is calculated as follows:
+$$ MAE = \frac{1}{n} \sum_{i=1}^{n}{|y - \hat{y_i}|} $$
+We get the following results for the train and test data and the different evaluation metrics:
+
+```{r neural_network_results, include=TRUE, echo=FALSE}
+library(knitr)
+
+### Train data ###
+
+# MSE and MAE of train data
+y_preds_train<-model %>% predict(X_train)
+mse_train<-mean((y_train - y_preds_train)^2)
+mae_train<-mae(y_train, y_preds_train)
+
+# Customized distance metric
+distances_mean_train<-mean(distances(y_train, y_preds_train)) 
+
 ### Test data ###
-set.seed(1)
+
 # Predict the Latitude for the test data
 y_pred_neural_net <- model %>% predict(X_test)
 
-# Evaluate with MSE
-mean((y_test - y_pred_neural_net)^2)
+# Evaluate with MSE and MAE
+mse_test<-mean((y_test - y_pred_neural_net)^2)
+mae_test<-mae(y_test, y_pred_neural_net)
 
 # Evaluate on test data and labels with customized distance metric
-distances_NN <- distances(y_test, y_pred_neural_net)
-mean(distances_NN)                   # 4122.794
+distances_test_NN<-distances(y_test, y_pred_neural_net)
+distances_mean_test<-mean(distances_test_NN)                   # 4122.794
+
+df <- data.frame(Metric = c("MSE", "MAE", "Custom Distances Mean"),
+                 "Train Data" = c(round(mse_train, 3), round(mae_train, 3), round(distances_mean_train, 3)),
+                 "Test Data" = c(round(mse_test, 3),round(mae_test, 3), round(distances_mean_test, 3)), check.names = FALSE)
+
+kable(df, caption = "Neural Network Results")
 ```
+
+As we can see, the results on the training data are, as expected, better than for the test data. The MSE for both sets are quite different though, with the training data having an MSE of 644,28 and the test data having one around 67% higher. The values for the MAE have a discrepancy of approximately 26%.
+The mean prediction error [km] calculated with the custom distances function for the training data is 3300,87 km, for the test data it's 4207,86 km.
 
 # Results
 
 ```{r comparisons_of_distributions, include=TRUE, echo=FALSE}
-distances_all <- cbind.data.frame(distances_baseline, distances_ridge_regression, distances_NN)
+distances_all <- cbind.data.frame(distances_baseline, distances_ridge_regression, distances_test_NN)
 names(distances_all)[names(distances_all) == "distances_baseline"] <- "Baseline"
 names(distances_all)[names(distances_all) == "distances_ridge_regression"] <- "Ridge Regression"
 names(distances_all)[names(distances_all) == "distances_NN"] <- "NN"
@@ -517,10 +580,10 @@ mp <- ggplot() + mapWorld +
   geom_line(data = aggregated_results_ridge_regression_10_percent, aes(Longitude, Latitude, group=index, color="RidgeRegression")) +
   geom_point(size = 1, data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color=source)) +
   geom_line(data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color="NeuralNet"))
-mp + theme_bw()
+mp + theme_bw() + labs(x="Longitude [°]", y="Latitude [°]")
 ```
 
-```{r investigations_on_angles, include=FALSE}
+```{r investigations_on_angles, include=TRUE}
 
 angle <- function(x,y){
   dot.prod <- x%*%y 
@@ -546,6 +609,7 @@ ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), 
 
 ```
 
+\newpage
 
 # Discussion
 As we introduced, predicting data points on the Earth using a latitude/longitude representation adds complexity to our problem because of the natural characteristics of coordinates. In first place longitude is discontinuous, meaning that the longitude of two points geographically near might be significantly different and secondly because coordinates are not linear. 
