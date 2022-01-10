@@ -3,13 +3,13 @@ title: "Machine learning II"
 author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
 date: "11.01.2022"
 output:
-  #word_document:
-  #  toc: yes
-  #  toc_depth: '2'
-  #html_document: default
   pdf_document:
     toc: yes
     toc_depth: 2
+  html_document: default
+  word_document:
+    toc: yes
+    toc_depth: '2'
 subtitle: Predicting the Geographical Origin of Music
 ---
 
@@ -37,20 +37,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r todos_for_Stefan, include=FALSE, echo=FALSE}
 ### TODO for Stefan
 
-# add a small text to the standardization of the data [Stefan] -> check
-# "conspicuousness" --> new name and maybe the graph after the image of the map [Stefan] -> check
-# text for the boxplot of latitude and longitude [Stefan] -> check
-#replace normal plots in ggplot -> check
+#replace normal plots in ggplot -> What about the ones in the NN part?
 #add + theme_bw() to each ggplot -> check
-print("scatter plot für koordinaten und box plot für varianz in long und lat") # -> ceck
-print("boxplot für distances für jedes modell -> um diese vergleichen zu können") # -> someone else did it already ... thx^^
 ```
 
 ```{r todos_for_matthias, include=TRUE, echo=FALSE}
 ### TODO for Matthias
 
-# have a look at the weights of the ridge regression and make a simplified model with less variables [Matthias]
-# test other model combinations for the NN to improve it. 
+# test other model combinations for the NN to improve it. -> tried not found
 ```
 
 
@@ -155,14 +149,14 @@ ggplot(sd_and_mean_per_col_df, aes(x=mean_per_col)) +
   coord_flip() + theme_bw()
 ```
 
-The paper[@Zhou2015] claims that the provided dataset is already standardized. To evaluate this statement, the mean and standard deviation for each feature column has been calculated and displayed in the boxplot above. This boxplot suggests that there is some kind of standardization, since all the features are roughly at a mean of 0 and a standard deviation of 1 (marked by the blue lines) but there are some outliers that have lower values. It seems like the standardization that the authors have been using was not super effective. Still we are not applying a second standardization on top of there standardization.
+The paper[@Zhou2015] claims that the provided dataset is already standardized. To evaluate this statement, the mean and standard deviation for each feature column has been calculated and displayed in the boxplot above. This boxplot suggests that there is some kind of standardization, since all the features are roughly at a mean of 0 and a standard deviation of 1 (marked by the blue lines). But there are some outliers that have lower values. It seems like the standardization that the authors have been using was not super effective. Still we are not applying a second standardization on top of these standardization. This is mainly caused to be able to compare our findings with the one from the literature.
 
 ```{r insights_create_worldmap, include=TRUE, echo=FALSE}
 # basic world map with music origins
 mapWorld <- borders("world", colour="gray50", fill="white")
 mp <- ggplot() + mapWorld
 
-mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5) + theme_bw()
+mp + geom_point(data = data, aes(x = Longitude, y = Latitude), color = "red", alpha = 0.5) + theme_bw() + labs(x= "Longitude [°]", y= "Latitude [°]")
 ```
 
 ## Discrepancy Data and Paper
@@ -183,7 +177,7 @@ nrow(occurences_per_region) # returns 33 -> 33 regions in the data set and not 7
 sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tracks in the data set
 ```
 
-The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some row are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
+The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some rows are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
 
 
 ```{r insights_3, include=TRUE, echo=FALSE}
@@ -194,13 +188,13 @@ boxplot_df <- rbind(df_lat, df_long)
 ggplot(boxplot_df, aes(x=value, y=dimension)) + 
   geom_boxplot(fill="slateblue", alpha=0.2) + 
   labs(title="Range of longitude and latitude observations",
-        y ="dimension", x = "value") +
+        y ="Dimension", x = "Angle [°]") +
   coord_flip() + theme_bw()
 ```
 
-To get a better overview of the data, the longitude and latitude of every observation have been plotted in a box plot. As expected from the map above, the median of both the latitude and longitude is at around 35 which would be the area around the middle east (more specific Turkey, Syria, Lebanon) which when looking at the map is more or less the center of all the regions. This is because most data point are Europe, South Asia Africa, where only three regions are in america. Also as expected, the longitude observations have roughly twice the range of the longitude observations, which can be explained by the natural range of those measurements (Longitude ranges form -180 to 180 and latitude ranges from -90 to 90).
+To get a better overview of the data, the longitude and latitude of every observation have been plotted in a box plot. As expected from the map above, the median of both the latitude and longitude is at around 35 which would be the area around the middle east (more specific Turkey, Syria, Lebanon) which when looking at the map is more or less the center of all the regions. This is because most data points are Europe, South Asia and Africa, while only three regions are in america. Also as expected, the longitude observations have roughly twice the range of the longitude observations, which can be explained by the natural range of those measurements (Longitude ranges form -180 to 180 and latitude ranges from -90 to 90).
 
-The one outlier in the latitude box at roughly -38, is the region of "Sydney" in Australia, which interestingly is not the capital of the country, in contradiction to what has been stated in the paper.
+The one outlier in the latitude box at roughly -38, is the region of "Canberra" in Australia.
 
 ## Data Preparation
 
@@ -276,7 +270,14 @@ The model tells that there is a difference and, as seen before, the smaller mode
 
 ```{r linear_regression_boxplot, echo=FALSE}
 # TODO:  in GGPLOT2
-boxplot(c(distances(pred.sig, data[test, c("Latitude","Longitude")]), distances(pred.all, data[test, c("Latitude","Longitude")]))) 
+small.model <- distances(pred.sig, data[test, c("Latitude","Longitude")])
+full.model <- distances(pred.all, data[test, c("Latitude","Longitude")])
+baseline.plot <- cbind.data.frame(small.model, full.model)
+
+names(baseline.plot)[names(baseline.plot) == "small.model"] <- "Significant Variables"
+names(baseline.plot)[names(baseline.plot) == "full.model"] <- "All Variables"
+
+ggplot() + geom_boxplot(data=stack(baseline.plot), aes(y=values, x=ind), outlier.color="red", fill="blue", alpha=0.2) + theme_bw() + labs(x="Model", y = "Distances [km]")
 ```
 
 \newpage
@@ -529,7 +530,7 @@ names(distances_all)[names(distances_all) == "distances_ridge_regression"] <- "R
 names(distances_all)[names(distances_all) == "distances_NN"] <- "NN"
 
 ggplot() + theme_bw() + 
-  geom_boxplot(data=stack(distances_all), aes(y=values, x=ind), fill = c("grey", "blue", "orange"), outlier.color="red") + labs (y = "Distances [km]", x ="Method")
+  geom_boxplot(data=stack(distances_all), aes(y=values, x=ind), fill = c("grey", "blue", "orange"), outlier.color="red", alpha=0.4) + labs (y = "Distances [km]", x ="Method")
 ```
 
 In the boxplot above the distributions of the baseline and the two other algorithms are displyed next to each other. It is clearly to see that the baseline is worse than the two performed algorithms. Not just the median of the baseline is higher than the other two medians but especially the 75%-Quantile is much higher than the ones from the Ridge Regression and the NN. 
@@ -582,7 +583,7 @@ mp <- ggplot() + mapWorld +
   geom_line(data = aggregated_results_ridge_regression_10_percent, aes(Longitude, Latitude, group=index, color="RidgeRegression")) +
   geom_point(size = 1, data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color=source)) +
   geom_line(data = aggregated_results_neural_net_10_percent, aes(Longitude, Latitude, group=index, color="NeuralNet"))
-mp + theme_bw()
+mp + theme_bw() + labs(x="Longitude [°]", y="Latitude [°]")
 ```
 
 ```{r investigations_on_angles, include=TRUE}
@@ -607,7 +608,7 @@ for (i in 1:dim(vectors.RR)[1]) {
   angles[i] <- angle(vectors.RR[i,], vectors.NN[i,])
 }
 
-ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), outlier.color = "red", fill="blue") + xlab("Angle")
+ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), outlier.color = "red", fill="blue", alpha=0.2) + xlab("Angle")
 
 ```
 
