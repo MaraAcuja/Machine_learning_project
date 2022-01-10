@@ -3,13 +3,13 @@ title: "Machine learning II"
 author: "Matthias Kunz, Stefan Beuchert, Adriana Sanchez, Vy Nguyen"
 date: "11.01.2022"
 output:
-  word_document:
-    toc: yes
-    toc_depth: '2'
-  html_document: default
   pdf_document:
     toc: yes
     toc_depth: 2
+  html_document: default
+  word_document:
+    toc: yes
+    toc_depth: '2'
 subtitle: Predicting the Geographical Origin of Music
 ---
 
@@ -68,6 +68,8 @@ print("boxplot für distances für jedes modell -> um diese vergleichen zu könn
 #install.packages("dplyr")
 #install.packages("keras")
 #install.packages("tensorflow")
+#install.packages("ggplot2")
+#install.packages("tensorflow")
 
 library("glmnet")
 library("ggplot2")
@@ -98,9 +100,9 @@ The data used in this project is provided by the authors of the paper "Predictin
 
 The authors collected 1,142 pieces of music from a personal CD-collection. The target values represented by longitude and latitude are the main country/area of residence of the artists that produced the music. Over all the authors collected music from 73 countries/areas not including western style music, since this category is called to have a global influence and therefor unfitted for predicting a specific country/region. 
 
-The attributes to describe the music pieces are automatically created by a software called MARSYAS[@tzanetakis2007marsyas], a software created to extract audio features from wave files. With MARSYAS the authors could convert every music peace to a set of 116 features called 'chromatic features'. The features are numerical and the authors claim to have normalized them into a gaussian normal distribution.
+The attributes to describe the music pieces are automatically created by a software called MARSYAS [@tzanetakis2007marsyas], a software created to extract audio features from wave files. With MARSYAS the authors could convert every music peace to a set of 116 features called 'chromatic features'. The features are numerical and the authors claim to have normalized them into a gaussian normal distribution.
 
-The selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output, coordinates.
+The selected task is suitable for classification and regression. However we decided that regression is a better approach because in first instance we don't have enough data to be representative to each country and secondly because of the special characteristics of desired output being coordinates.
 
 ```{r import_files, include=TRUE, echo=FALSE}
 data <- read.csv("Data/default_plus_chromatic_features_1059_tracks.txt", header=FALSE)
@@ -116,7 +118,7 @@ anyDuplicated(data) # testing for duplicates -> 0 found
 
 ```
 
-## some insights into the data
+## Some insights into the data
 
 ```{r check_if_standardized, include=TRUE, fig.align='center', out.width='.49\\linewidth', fig.show="hold", echo=FALSE}
 # check if data is already standardized
@@ -172,12 +174,13 @@ When looking at the map, it seems like there are way fewer unique data points th
 # the unique combinations of long and lat represent regions
 occurences_per_region <- data.frame(data %>% count(Longitude, Latitude, sort=TRUE))
 
-nrow(occurences_per_region) # returns 33 -> 33 regions in the data set and not 71 like proposed in the paper -> maybe not all data has been uploaded 
+nrow(occurences_per_region) # returns 33 -> 33 regions in the data set and not 71
+                            # like proposed in the paper -> maybe not all data has been uploaded 
 
 sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tracks in the data set
 ```
 
-The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some row are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
+The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only belong to 33 different regions. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some row are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
 
 
 ```{r insights_3, include=TRUE, echo=FALSE}
@@ -192,7 +195,7 @@ ggplot(boxplot_df, aes(x=value, y=dimension)) +
   coord_flip() + theme_bw()
 ```
 
-To get a better overview of the data, the longitude and latitude of every observation have been plotted in a box plot. As expected from the map above, the median of both the latitude and longitude is at around 35 which would be the area around the middle east (more specific Turkey, Syria, Lebanon) which when looking at the map is more or less the center of all the regions. This is because most data point are Europe, South Asia Africa, where only three regions are in america. Also as expected, the longitude observations have roughly twice the range of the longitude observations, which can be explained by the natural range of those measurements (Longitude ranges form -180 to 180 and latitude ranges from -90 to 90).
+To get a better overview of the data, the longitude and latitude of every observation have been plotted in a box plot. As expected from the map above, the median of both the latitude and longitude is at around 35 which would be the area around the middle east (more specific Turkey, Syria, Lebanon) which when looking at the map is more or less the center of all the regions. This is because most data point are Europe, South Asia Africa, where only three regions are in America. Also as expected, the longitude observations have roughly twice the range of the longitude observations, which can be explained by the natural range of those measurements (Longitude ranges form -180 to 180 and latitude ranges from -90 to 90).
 
 The one outlier in the latitude box at roughly -38, is the region of "Sydney" in Australia, which interestingly is not the capital of the country, in contradiction to what has been stated in the paper.
 
@@ -207,12 +210,9 @@ train <- sample(1:n, 0.8*n)
 test <- (1:n)[-train]
 ```
 
-
-
 # Method
 
-We treat the problem of predicting the geographical origin of music as a regression problem since we want to predict the spherical coordinates (longitude and latitude).
-In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric: The geographical distance from the true position.
+We treat the problem of predicting the geographical origin of music as a regression problem since we want to predict the spherical coordinates (longitude and latitude). In Zhou et al. [@Zhou2015] they list two reasons as to why it's preferably not treated as a classification problem: One, the ratio between the large number of countries/areas and the number of examples per country/area is very disproportional and would result in poor classification results. And secondly, with regression we already have a natural error metric: The geographical distance from the true position.
 
 ```{r functions, include=TRUE}
 distances <- function(predicted, actual_value) {
@@ -224,7 +224,7 @@ distances <- function(predicted, actual_value) {
 ```
 We wrote an overall function that calculates the distance between the predicted location of origin and the actual origin. The euclidean distance is used as a metrics. In fact, the algorithm is quite close to the calculation of the mean squared error for two dimensions. But it also converts the sphere coordinates into distances in [km]. This allows an easy interpretation of the results as well as a comparison with the results from the literature.
 
-To analyze the data we first took a baseline using a linear regression model before we applied two algorithms: Ridge regression and neural networks
+To analyze the data we first took a baseline using a linear regression model before we applied two algorithms: Ridge regression and neural networks.
 
 ## Baseline - Linear Regression
 
@@ -235,7 +235,7 @@ model.lm.all <- lm(cbind(Longitude, Latitude)~., data=data[train,])
 pred.all <- predict(model.lm.all, newdata=data[test,])
 ```
 
-To calculate a good meaningful measurement for the goodness of fit for the predictions the distance from the true location is calculated. The distances are calculated as the euclidean distances of the Longitude and Latitude between the predictions and the true location. They are measured in [km]. These will be used for all the comparisons of the algorithms between each other but also with the baseline and also with the literature (we need here another citation to the original paper)
+To calculate a good meaningful measurement for the goodness of fit for the predictions the distance from the true location is calculated. The distances are calculated as the euclidean distances of the Longitude and Latitude between the predictions and the true location. They are measured in [km]. These will be used for all the comparisons of the algorithms between each other but also with the baseline and also with the literature (Zhou et al. [@Zhou2015])
 
 The predictions are on average quite far from the true destination:
 ```{r linear_regression_all_variables_result, include=TRUE, echo=FALSE}
@@ -244,7 +244,6 @@ mean(distances_baseline) ## final result in km
 ```
 
 The impact of the variables was analysed. It seemed that not all of them have a significant influence on the models. So a second model was developed, just using the variable which have a significant influence on the full model, either on the Latitude or on the Longitude. 
-
 
 ```{r linear_regression_significant_variables, include=TRUE}
 model.lm.sig <- lm(cbind(Longitude, Latitude)~ V4+V9+V16+V30+V32+V33+V37+V38+V61+V90+V91
@@ -381,8 +380,6 @@ ggplot() + geom_point(data = cv.fine, aes(x = log10(grid.fine), y = cv.err.fine)
 
 
 ## Algorithm 2 - Artificial Neural Networks (NNs)
-Short introduction of the second algorithm. What does it do? What are the strengths? What are weaknesses? How is it implemented, including major code snippets.
-
 For the second algorithm we'll be using Artificial Neural Networks (NNs) as they can be used for regression problems as well. 
 To use NNs for our predictions we will, as with all machine learning models, fit the data to the model. This is done by minimizing the loss function, which for NN-regression is the mean of squared errors MSE over the training set.
 In the case of fitting a neural network, it is much faster if the data are scaled/normalised first and also gives more appropriate results if the features that are used have different scales and ranges. But this is already the case here.
@@ -466,10 +463,6 @@ mean(distances_NN)                   # 4122.794
 
 # Results
 
-Here some tables, summaries or especially graphs should be shown here. Maybe this section should be separated into two to show the algorithms for themselves
-
-We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better overall. First, in our implementation of ridge regression we are fitting two separate models in order to get the two desired output variables. Nevertheless, we know that latitude and longitude are correlated variables, fact that ridge regression doesn't take into account so we expected a bigger error than NN. In the contrary, above implementation of neural network is predicting two variables at once like examples given in paper. 
-
 ```{r comparisons_of_distributions, include=TRUE, echo=FALSE}
 distances_all <- cbind.data.frame(distances_baseline, distances_ridge_regression, distances_NN)
 names(distances_all)[names(distances_all) == "distances_baseline"] <- "Baseline"
@@ -480,12 +473,11 @@ ggplot() + theme_bw() +
   geom_boxplot(data=stack(distances_all), aes(y=values, x=ind), fill = c("grey", "blue", "orange"), outlier.color="red") + labs (y = "Distances [km]", x ="Method")
 ```
 
-In the boxplot above the distributions of the baseline and the two other algorithms are displyed next to each other. It is clearly to see that the baseline is worse than the two performed algorithms. Not just the median of the baseline is higher than the other two medians but especially the 75%-Quantile is much higher than the ones from the Ridge Regression and the NN. 
+In the boxplot above the distributions of the baseline and the two other algorithms are displayed next to each other. It is clearly to see that the baseline is worse than the two performed algorithms. Not just the median of the baseline is higher than the other two medians but especially the 75%-Quantile is much higher than the ones from the Ridge Regression and the NN. 
 
-A comparisons of the two performed algorithms is a bit more difficult. THe median is quite similar and as the box of the ridge regression is smaller the distribution is a bit more dense compared to the NN. But this algorithm doesn't seem to be better or worse compared to the NN.
+A comparisons of the two performed algorithms is a bit more difficult. The median is quite similar and as the box of the ridge regression is smaller the distribution is a bit more dense compared to the NN. But this algorithm doesn't seem to be better or worse compared to the NN.
 
 Further investigations have to be done by displaying the predictions on a map and linking them to the true origins of the music:
-
 
 ```{r final_map_for_comparison, include=TRUE, echo=FALSE}
 # y[test,]
@@ -533,7 +525,7 @@ mp <- ggplot() + mapWorld +
 mp + theme_bw()
 ```
 
-```{r investigations_on_angles, include=TRUE}
+```{r investigations_on_angles, include=FALSE}
 
 angle <- function(x,y){
   dot.prod <- x%*%y 
@@ -561,7 +553,6 @@ ggplot() + theme_bw() + geom_boxplot(data=as.data.frame(angles), aes(x=angles), 
 
 
 # Discussion
- 
 Here follows the discussion of the results. What are the major findings? How did the algorithms perform? Which one was better overall? Is it always better or were the findings which were better by the other one?
 Which one should be implemented? How could the algorithm be tweaked to perform even better?
 Where were the problems during implementation? Where are the limits for the algorithms?
@@ -569,8 +560,15 @@ How precise do we predict the cities? How far is the difference in kilometers? T
 
 As we introduced, predicting data points on the Earth using a latitude/longitude representation adds complexity to our problem because of the natural characteristics of coordinates. In first place longitude is discontinuous, meaning that the longitude of two points geographically near might be significantly different and secondly because coordinates are not linear. 
 
-If we compare the two models applied by looking at MSE we know that neural network performs better than ridge regression, as we assumed.However the difference is not big ___ km. Nevertheless, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km.
+We decided on compare a traditional regression method against a more modern architecture like neural network assuming that the last one would perform better because the nature of selected data is not linear. For the first algorithm implementation, ridge regression had been used to fit two separate models in order to get the two desired output variables, this approach would assume that longitude and latitude are stochastically independent. For a better comparison, ridge regression had been fitted also as multivariate model. For both cases cross-validation had been used to determine de optimal lamdba. We would assume than given the relation between longitude and latitude second model would perform better, however by the results indicates that the assumptions is not valid, since MSE for tho implementations was very similar, 4492.287km and 4461.744 respectively. 
+
+The second algorithm chosen was neural network, out hypothesis was that this one would lead better results to our problem than ridge regression  since its a parametric solution. Nevertheless, the 4 layer implementation achieved an error of 4287.664 km in the test data. While implementing it, we tried to increase hidden layers, increase number of neurons as well as  Which is better than ridge regression but not significantly. 
+
+If we compare the two models applied by looking at MSE we know that neural network performs better than ridge regression, as we assumed. However the difference is not big ___ km. Nevertheless, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km.
 
 
 # Conclusion
 At final some conclusions about the key findings and which algorithm should be used. What was the goal? Were and how were they achieved?
+
+
+If we compare the two models applied by looking at MSE we know that neural network performs better than ridge regression, as we assumed. However the difference is not big ___ km. Nevertheless, the algorithms presented in In Zhou et al. [@Zhou2015] (KNN and RFR) performs significantly better than ours, achieving an average distance error from 3,100 km to 3,600 km.
