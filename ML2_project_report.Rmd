@@ -177,10 +177,12 @@ When looking at the map, it seems like there are way fewer unique data points th
 # the unique combinations of long and lat represent regions
 occurences_per_region <- data.frame(data %>% count(Longitude, Latitude, sort=TRUE))
 
-nrow(occurences_per_region) # returns 33 -> 33 regions in the data set and not 71
-                            # like proposed in the paper -> maybe not all data has been uploaded 
+nrow(occurences_per_region) 
+# returns 33 -> 33 regions in the data set and not 71
+# like proposed in the paper -> maybe not all data has been uploaded 
 
-sum(occurences_per_region[, 'n']) # returns 1059 -> therefore there are 1095 tracks in the data set
+sum(occurences_per_region[, 'n']) 
+# returns 1059 -> therefore there are 1095 tracks in the data set
 ```
 
 The results suggest that there are actually only 33 unique combinations of latitude and longitude in the data set. Therefore the pieces can only be categorized into 33 different categories. The reason for this discrepancy to the suggested number in the paper (73) might be that some regions have been aggregated prior to uploading the data or some rows are missing. The second statement is also supported, by the fact that there are not 1,142 pieces in the data set as described in the paper, but only 1059 pieces. Whatever this (small) difference does not influence the tasked tackled/perused by this report.
@@ -224,7 +226,8 @@ We treat the problem of predicting the geographical origin of music as a regress
 ```{r functions, include=TRUE}
 distances <- function(predicted, actual_value) {
   dif <- predicted-actual_value
-  dif <- dif * (40030/360) # scaling coordinates to km by the factor circumference (km) / 360°
+  # scaling coordinates to km by the factor circumference (km) / 360°
+  dif <- dif * (40030/360) 
   mse <- sqrt(dif[,1]^2 + dif[,2]^2)
   return(mse)
 }
